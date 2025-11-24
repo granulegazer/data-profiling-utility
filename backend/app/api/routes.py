@@ -71,7 +71,11 @@ async def create_profiling_job(
     db.commit()
     db.refresh(job)
     
-    # Start profiling in background (simplified - in production use Celery or similar)
+    # Start profiling (Note: executed synchronously for simplicity)
+    # For production use with large datasets, implement async processing with:
+    # - Celery for distributed task queue
+    # - FastAPI BackgroundTasks for lightweight async tasks
+    # - Message queue (RabbitMQ/Redis) for job management
     try:
         job.status = "running"
         db.commit()
@@ -182,18 +186,31 @@ async def get_profiling_result_detail(result_id: int, db: Session = Depends(get_
 @router.post("/upload-file")
 async def upload_file(file: UploadFile = File(...)):
     """Upload a file for profiling"""
+    import os
+    import re
+    
     # Create upload directory if it doesn't exist
     upload_dir = Path(settings.UPLOAD_DIR)
     upload_dir.mkdir(parents=True, exist_ok=True)
     
+    # Sanitize filename to prevent path traversal
+    # Remove any path components and only keep the filename
+    safe_filename = os.path.basename(file.filename)
+    # Remove any characters that aren't alphanumeric, dots, hyphens, or underscores
+    safe_filename = re.sub(r'[^\w\-\.]', '_', safe_filename)
+    
+    # Ensure we have a valid filename
+    if not safe_filename or safe_filename == '.':
+        safe_filename = 'uploaded_file'
+    
     # Save file
-    file_path = upload_dir / file.filename
+    file_path = upload_dir / safe_filename
     with open(file_path, "wb") as f:
         content = await file.read()
         f.write(content)
     
     return {
-        "filename": file.filename,
+        "filename": safe_filename,
         "file_path": str(file_path),
         "size": len(content)
     }

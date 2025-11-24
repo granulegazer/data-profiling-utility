@@ -46,9 +46,15 @@ class OracleConnector(DataConnector):
     
     def read_data(self, table_name: str, sample_size: int = None) -> pd.DataFrame:
         """Read data from Oracle table"""
-        query = f"SELECT * FROM {table_name}"
+        # Sanitize table name to prevent SQL injection
+        # Oracle table names should be alphanumeric with underscores
+        import re
+        if not re.match(r'^[a-zA-Z0-9_]+$', table_name):
+            raise ValueError(f"Invalid table name: {table_name}")
+        
+        query = f'SELECT * FROM "{table_name}"'
         if sample_size:
-            query += f" WHERE ROWNUM <= {sample_size}"
+            query += f" WHERE ROWNUM <= {int(sample_size)}"
         
         return pd.read_sql(query, self.connection)
     

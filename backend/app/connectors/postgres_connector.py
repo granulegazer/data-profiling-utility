@@ -44,11 +44,19 @@ class PostgresConnector(DataConnector):
     
     def read_data(self, table_name: str, sample_size: int = None) -> pd.DataFrame:
         """Read data from PostgreSQL table"""
-        query = f"SELECT * FROM {table_name}"
-        if sample_size:
-            query += f" LIMIT {sample_size}"
+        # Sanitize table name to prevent SQL injection
+        from psycopg2 import sql
         
-        return pd.read_sql(query, self.connection)
+        if sample_size:
+            query = sql.SQL("SELECT * FROM {} LIMIT %s").format(
+                sql.Identifier(table_name)
+            )
+            return pd.read_sql(query.as_string(self.connection), self.connection, params=[sample_size])
+        else:
+            query = sql.SQL("SELECT * FROM {}").format(
+                sql.Identifier(table_name)
+            )
+            return pd.read_sql(query.as_string(self.connection), self.connection)
     
     def test_connection(self) -> bool:
         """Test PostgreSQL connection"""
