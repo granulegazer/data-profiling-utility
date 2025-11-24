@@ -19,7 +19,6 @@ A scalable data profiling tool designed to analyze large datasets from various s
 ### Supported Sources
 1. **Data Lakes**
    - Access via REST API calls
-   - Support for cloud storage (S3, Azure Blob, GCS)
    - Batch and streaming data ingestion
 
 2. **Relational Databases**
@@ -30,7 +29,6 @@ A scalable data profiling tool designed to analyze large datasets from various s
 
 3. **Flat Files**
    - CSV, TSV, TXT
-   - Parquet, Avro, ORC
    - JSON, XML
    - Excel files (XLSX, XLS)
 
@@ -149,7 +147,7 @@ A scalable data profiling tool designed to analyze large datasets from various s
   - Connection configurations (encrypted credentials)
   - User preferences and settings
 - **Profiling Results Storage**:
-  - JSON format stored in S3-compatible object storage or filesystem
+  - JSON format stored in filesystem or network storage
   - Hierarchical structure: `{job_id}/{entity_name}/profile_results.json`
   - Summary statistics stored in PostgreSQL for quick queries
   - Detailed results (distributions, patterns) in JSON files
@@ -290,7 +288,7 @@ A scalable data profiling tool designed to analyze large datasets from various s
 - Orchestration: Docker Compose (dev), Kubernetes (prod)
 - Message Queue: Redis or RabbitMQ (for async jobs)
 - Cache: Redis
-- Storage: S3-compatible object storage for reports
+- Storage: Filesystem or network storage for reports
 
 ## Development Phases
 
