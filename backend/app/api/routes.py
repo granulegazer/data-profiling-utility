@@ -2,7 +2,6 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
 from typing import List
-import json
 from pathlib import Path
 
 from ..core.database import get_db
