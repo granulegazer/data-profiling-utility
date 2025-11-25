@@ -389,19 +389,68 @@ A scalable data profiling tool designed to analyze large datasets from various s
 ## Development Phases
 
 ### Phase 1: MVP (Minimum Viable Product)
-- Basic React frontend with dataset/connection configuration
+#### Backend & Data Sources
 - FastAPI backend with REST endpoints
 - Support for Oracle and PostgreSQL datasets (schema-level profiling)
-- Entity filtering capabilities
-- Core profiling rules (statistics, nulls, data types)
-- Dataset-level summary with entity breakdown display
+- Database connection management with credential encryption
+- Entity filtering capabilities (include/exclude, pattern-based)
+- Table-level profiling with column selection
+- Custom query profiling support
+
+#### Complete Generic Enterprise Profiling Rules
+1. **Column Statistics**: Record count, null count/%, unique/distinct/duplicate counts
+2. **Data Type Analysis**: Inferred types, type consistency, format patterns, mismatches
+3. **Numeric Analysis**: Min, max, mean, median, std dev, variance, quartiles, percentiles, outliers
+4. **String Analysis**: Min/max/avg length, pattern frequency, character sets, whitespace detection
+5. **Date/Time Analysis**: Date range, format patterns, timezone detection, invalid dates
+6. **Data Quality Metrics**: Completeness, validity, consistency, accuracy indicators
+7. **Value Distribution**: Frequency distribution, top N values, histograms, cardinality
+8. **Referential Integrity**: Foreign key validation, orphan records, cross-table checks
+9. **Candidate Key Discovery**: Single-column keys, composite keys, uniqueness %, near-unique columns, PK suggestions
+10. **PII Detection**: Email, phone, SSN, credit card patterns, GDPR compliance, sensitive data flagging
+
+#### Frontend & Visualization
+- React frontend with Vite and TypeScript
+- **Dataset Configuration UI**: Connection setup, dataset selection, entity filtering
+- **Dataset Profile Dashboard**:
+  - Dataset-level overview with aggregated metrics
+  - Overall data quality score
+  - Total entities, rows, columns
+  - Data quality distribution across entities
+- **Entity Summary View**:
+  - Entity list with summary cards (row count, column count, quality score)
+  - Filterable and sortable by name, size, quality, type
+  - Search and quick comparison
+- **Detailed Entity/Attribute View**:
+  - Column-level profiling results in tables
+  - All 10 enterprise rules results displayed
+  - Expandable rows for detailed statistics
+- **Visualizations**:
+  - Value distribution histograms
+  - Data quality gauges/scorecards
+  - Pattern frequency charts
+  - Null percentage indicators
+  - Candidate key diagrams
+  - Outlier visualization
+  - Summary and detailed level charts
+
+#### Progress Tracking
+- Real-time job progress tracking with ETA
+- Entity-level status (queued/in-progress/completed/failed)
+- Processing speed metrics (rows/second)
+
+#### Storage
+- Oracle database for metadata and results
+- CLOB storage for JSON data (distributions, patterns, histograms)
+- Structured tables for statistics and metrics
 
 ### Phase 2: Enhanced Features
-- Support for Oracle database and data lake APIs
-- Additional profiling rules (patterns, distributions)
+- Support for data lake APIs (REST API, XPath/JSON path parsing)
+- Flat file support (CSV, JSON, XML, Excel)
 - Job history and result archival
-- Export capabilities
-- Improved UI/UX
+- Export capabilities (JSON, CSV, Excel, PDF)
+- Historical comparison (compare profiling runs)
+- Improved UI/UX and performance optimization
 
 ### Phase 3: Advanced Capabilities
 - Custom rule engine
