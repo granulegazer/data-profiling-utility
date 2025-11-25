@@ -234,24 +234,48 @@ A scalable data profiling tool designed to analyze large datasets from various s
   ```
 
 ### 4. Results Viewing & Reporting
-- **Dataset Profile Dashboard**:
-  - Dataset-level overview: aggregated metrics across all entities
-  - Overall data quality score and grade (Gold/Silver/Bronze) for the dataset
-  - Quality grade distribution chart (count of Gold/Silver/Bronze entities)
-  - Total entities, rows, columns in the dataset
-  - Distribution of data quality across entities
+
+#### **View Hierarchy (Top to Bottom)**
+
+**Level 1: Dataset Profile Dashboard** (Primary Summary View)
+- **Dataset-Level Summary Cards** (displayed first/top):
+  - 4 Key Metric Cards:
+    - Total Entities profiled
+    - Average Quality Score (aggregated across all entities)
+    - Total Rows (sum of all entity row counts)
+    - Total Columns (sum of all entity column counts)
+  - Overall dataset quality grade badge (Gold/Silver/Bronze)
+  - Dataset metadata: name, source type, profiling timestamp
   - Trend indicators (if historical data available)
-- **Entity Summary View**:
-  - List of all entities within the profiled dataset
-  - Entity-level summary cards with key metrics (row count, column count, quality score, quality grade)
-  - Display entity type: table (full/partial columns) or custom query
-  - Show source query for query-based profiles
-  - Show selected columns for partial table profiles
-  - **Quality Grade Badge**: Color-coded (Gold/Silver/Bronze) visual indicator
-  - Filterable and sortable entity list (by name, size, quality score, quality grade, type)
-  - Search entities within the dataset
-  - Quick comparison between entities
-- **Detailed Entity View** (drill-down from entity summary):
+
+- **Data Quality Visualizations**:
+  - Quality Grade Distribution Chart (Pie/Donut/Bar)
+    - Visual breakdown: count of Gold/Silver/Bronze entities
+    - Percentage distribution
+    - Color-coded segments matching grade colors
+  - Entity Quality Scores Chart (Horizontal Bar or Column Chart)
+    - Top entities by quality score
+    - Sortable and interactive
+  - Data quality trends over time (if multiple profiling runs exist)
+
+- **Entity List Section** (below summary and charts):
+  - List/Grid of all profiled entities
+  - Entity cards/rows with key metrics
+  - Search, filter, and sort capabilities
+
+**Level 2: Entity Summary List** (within Dataset Dashboard)
+- List of all entities within the profiled dataset
+- Entity-level summary cards with key metrics (row count, column count, quality score, quality grade)
+- Display entity type: table (full/partial columns) or custom query
+- Show source query for query-based profiles
+- Show selected columns for partial table profiles
+- **Quality Grade Badge**: Color-coded (Gold/Silver/Bronze) visual indicator
+- Filterable and sortable entity list (by name, size, quality score, quality grade, type)
+- Search entities within the dataset
+- Quick comparison between entities
+- Click entity to drill down
+
+**Level 3: Detailed Entity View** (drill-down from entity list)
   - Column-level profiling results in tabular format
   - Expandable rows for detailed column statistics
   - Side-by-side column comparison
@@ -555,20 +579,31 @@ The application consists of **5 main screens**:
    │           │
    │           └─→ 3. DATASET PROFILE DASHBOARD
    │               │
-   │               ├─ **Top Section**: Real-time Job Progress
+   │               ├─ **Top Section**: Real-time Job Progress (if in progress)
    │               │  • Progress bar with percentage
    │               │  • Entities: queued/in-progress/completed/failed
    │               │  • Processing speed (rows/sec)
    │               │  • Estimated time to completion (ETC)
    │               │  • [Cancel Job] button (if in progress)
    │               │
-   │               ├─ **Middle Section**: Dataset-Level Overview
-   │               │  • Overall data quality score & grade badge
-   │               │  • Quality grade distribution chart (Gold/Silver/Bronze)
-   │               │  • Total entities, rows, columns
-   │               │  • Dataset metadata display
+   │               ├─ **Dataset-Level Summary Cards** (Primary View)
+   │               │  • 4 Overview Cards in Grid Layout:
+   │               │    - Total Entities (count)
+   │               │    - Average Quality Score (0-100)
+   │               │    - Total Rows (sum across all entities)
+   │               │    - Total Columns (sum across all entities)
+   │               │  • Overall dataset quality grade badge (Gold/Silver/Bronze)
+   │               │  • Dataset metadata (name, source type, profiling date)
    │               │
-   │               ├─ **Bottom Section**: Entity List/Grid
+   │               ├─ **Data Quality Visualizations**
+   │               │  • Quality Grade Distribution (Pie/Donut Chart)
+   │               │    - Count of Gold/Silver/Bronze entities
+   │               │    - Color-coded segments
+   │               │  • Entity Quality Scores (Bar Chart)
+   │               │    - Top 5-10 entities by quality score
+   │               │    - Sorted view of entity quality
+   │               │
+   │               ├─ **Entity List/Grid** (Secondary View - below charts)
    │               │  • Summary cards for each entity
    │               │  • Entity type badge (Table/Table-Partial/Query)
    │               │  • Key metrics: rows, columns, quality score, grade
@@ -650,10 +685,14 @@ Step 1: Select PostgreSQL, enter connection → [Test] → [Next] →
 Step 2: Select schema "public" → [Browse Tables mode] → 
         Select 3 tables: customers, orders, products → [Next] →
 Step 3: [Profile All Columns] → [Start Profiling] →
-Dashboard: Watch progress (50%... 100%) → 
-Click "customers" entity card →
-Detailed View: Review column statistics → [Back] →
-Dashboard: [Export Report]
+Dashboard: 
+  • Watch progress bar (50%... 100%) →
+  • View Dataset Summary Cards (3 entities, avg score 82, 1.3M rows) →
+  • Review Quality Distribution Chart (1 Gold, 1 Silver, 1 Bronze) →
+  • Scroll to Entity List →
+  • Click "customers" entity card →
+Detailed Entity View: Review column statistics → [Back] →
+Dashboard: Review other entities → [Export Report]
 ```
 
 #### **Journey 2: Advanced User - Custom Query**
