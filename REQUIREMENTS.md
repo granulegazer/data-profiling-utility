@@ -310,7 +310,32 @@ A scalable data profiling tool designed to analyze large datasets from various s
 
 ### 5. User Interface Features
 - **Source & Dataset Configuration**:
-  - Add/edit/test data source connections
+  - **Connection Management**:
+    - Load saved connections from configuration file (JSON/YAML)
+    - Dropdown/selection list of available connections
+    - Display connection metadata (name, type, host, last used)
+    - Add new connection (opens form/modal)
+    - Edit existing connection details
+    - Delete connection from config
+    - Test connection before use
+    - Connection config file structure:
+      ```json
+      {
+        "connections": [
+          {
+            "id": "conn_001",
+            "name": "Production PostgreSQL",
+            "type": "postgresql",
+            "host": "prod-db.example.com",
+            "port": 5432,
+            "database": "main_db",
+            "username": "profiler_user",
+            "password_encrypted": "...",
+            "last_used": "2025-11-24T10:30:00Z"
+          }
+        ]
+      }
+      ```
   - Select dataset to profile (schema, database, directory)
   - **Browse & Select Entities**:
     - **Option 1: Browse Tables** - Visual table browser with checkboxes to select specific tables
@@ -531,9 +556,16 @@ The application consists of **5 main screens**:
    │       │
    │       ├─ STEP 1: Data Source Setup
    │       │  • Select connection type (Database/Data Lake/File)
-   │       │  • Enter connection details (host, port, credentials)
+   │       │  • **Select Saved Connection** (dropdown from config file)
+   │       │    - Load connection parameters from configuration file
+   │       │    - Display connection name/alias
+   │       │    - Show connection type and source info
+   │       │  • OR [+ Add New Connection] button
+   │       │    - Opens modal/form to enter connection details
+   │       │    - Fields: host, port, database, credentials, etc.
+   │       │    - [Save to Config] option
    │       │  • [Test Connection] button
-   │       │  • [Save Connection] for reuse
+   │       │  • [Edit Connection] option for selected connection
    │       │  └─→ [Next] button
    │       │
    │       ├─ STEP 2: Dataset & Entity Selection
@@ -681,7 +713,8 @@ The application consists of **5 main screens**:
 #### **Journey 1: New User - Profile Database Tables**
 ```
 Home → [+ New Job] → 
-Step 1: Select PostgreSQL, enter connection → [Test] → [Next] →
+Step 1: Select saved connection "Production PostgreSQL" from dropdown → 
+        [Test Connection] → Success → [Next] →
 Step 2: Select schema "public" → [Browse Tables mode] → 
         Select 3 tables: customers, orders, products → [Next] →
 Step 3: [Profile All Columns] → [Start Profiling] →
@@ -698,7 +731,7 @@ Dashboard: Review other entities → [Export Report]
 #### **Journey 2: Advanced User - Custom Query**
 ```
 Home → [+ New Job] →
-Step 1: Select existing saved connection → [Next] →
+Step 1: Select saved connection "Analytics DB" from dropdown → [Next] →
 Step 2: [Custom Query mode] → 
         Write SQL: "SELECT c.*, o.total FROM customers c JOIN orders o..." →
         [Validate Query] → [Preview Results] → 
