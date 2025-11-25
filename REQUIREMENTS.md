@@ -45,11 +45,26 @@ A scalable data profiling tool designed to analyze large datasets from various s
 - Handle large datasets with streaming/chunked processing
 - Implement connection pooling and retry logic
 - Support on-demand profiling jobs
-- **Entity Selection**: Accept list of entities (tables/files/datasets) as input
-  - Single or multiple entity profiling in one job
-  - Bulk entity import via CSV/JSON
-  - Pattern-based entity selection (e.g., all tables matching "CUSTOMER_*")
-  - Schema-level profiling (all entities within a schema)
+- **Dataset-Level Profiling**: Profile entire datasets (schemas, databases, file collections)
+  - Dataset = collection of related entities (tables in a schema, files in a directory)
+  - Profile all entities within the dataset
+  - Generate dataset-level summary with entity breakdowns
+- **Entity Filtering**: Optional entity list to filter which entities to include
+  - Include/exclude specific entities from profiling
+  - Pattern-based filtering (e.g., include only "CUSTOMER_*" tables)
+  - Bulk filter specification via CSV/JSON
+  - Default: profile all entities in the dataset if no filter provided
+- **Database-Specific Profiling Options**:
+  - **Table-Level Profiling**:
+    - Profile entire table (all columns)
+    - Profile selected columns only (column selection)
+    - Specify columns via UI selection or column list
+  - **Custom Query Profiling**:
+    - Provide SQL query instead of table name
+    - Profile the result set of the query
+    - Query validation before execution
+    - Support for complex queries (JOINs, WHERE clauses, CTEs)
+    - Treat query result as a virtual entity for profiling
 
 ### 2. Profiling Rules
 
@@ -143,40 +158,60 @@ A scalable data profiling tool designed to analyze large datasets from various s
 - **Performance Optimization**: Columnar processing, lazy evaluation, query optimization
 
 ### 4. Output Storage
-- **Metadata Database (PostgreSQL)**:
+- **Metadata Database (Oracle)**:
   - Job execution metadata (job ID, timestamps, status, parameters)
-  - Entity metadata (source, entity name, row counts)
+  - Dataset metadata (source, dataset name, entity counts)
+  - Entity metadata (entity name, row counts, column counts)
   - Connection configurations (encrypted credentials)
   - User preferences and settings
 - **Profiling Results Storage**:
   - JSON format stored in filesystem or network storage
-  - Hierarchical structure: `{job_id}/{entity_name}/profile_results.json`
-  - Summary statistics stored in PostgreSQL for quick queries
+  - Hierarchical structure: `{job_id}/{dataset_name}/{entity_name}/profile_results.json`
+  - Summary statistics stored in Oracle for quick queries
   - Detailed results (distributions, patterns) in JSON files
   - Retention policy: configurable (default 90 days)
 - **Storage Schema**:
   ```
-  Job:
-    - job_id, created_at, started_at, completed_at, status, source_type
-    - entities_list, total_entities, completed_entities
+  Profiling_Job:
+    - job_id, created_at, started_at, completed_at, status
+    - source_type, dataset_name, entity_filter_applied
+    - total_entities, completed_entities, filtered_entities
     - estimated_completion_time, progress_percentage
-  Entity_Profile:
-    - profile_id, job_id, entity_name, row_count, column_count
-    - status, started_at, completed_at, profiled_at
+  Dataset_Profile:
+    - dataset_profile_id, job_id, dataset_name
+    - total_entities, total_rows, total_columns, profiled_at
+    - overall_quality_score, storage_size
+  Entity_Profile_Summary:
+    - entity_profile_id, dataset_profile_id, entity_name, entity_type
+    - source_query (NULL for tables, SQL for custom queries)
+    - selected_columns (NULL for all columns, comma-separated list for selection)
+    - row_count, column_count, null_percentage, data_quality_score
+    - status, started_at, completed_at
     - rows_processed, processing_speed_rows_per_sec
   Column_Statistics:
-    - stat_id, profile_id, column_name, data_type, null_pct, unique_count, etc.
+    - stat_id, entity_profile_id, column_name, data_type
+    - null_pct, unique_count, distinct_count, etc.
   Profile_Results_Path:
-    - profile_id, json_storage_path, file_size
+    - entity_profile_id, json_storage_path, file_size
   ```
 
 ### 5. Results Viewing & Reporting
-- **Profile Summary Dashboard**:
-  - Job-level overview: all entities profiled in a job
-  - Entity-level summary cards with key metrics
-  - Data quality score indicators
-  - Filterable entity list (by name, row count, quality score)
-- **Detailed Entity View**:
+- **Dataset Profile Dashboard**:
+  - Dataset-level overview: aggregated metrics across all entities
+  - Overall data quality score for the dataset
+  - Total entities, rows, columns in the dataset
+  - Distribution of data quality across entities
+  - Trend indicators (if historical data available)
+- **Entity Summary View**:
+  - List of all entities within the profiled dataset
+  - Entity-level summary cards with key metrics (row count, column count, quality score)
+  - Display entity type: table (full/partial columns) or custom query
+  - Show source query for query-based profiles
+  - Show selected columns for partial table profiles
+  - Filterable and sortable entity list (by name, size, quality score, type)
+  - Search entities within the dataset
+  - Quick comparison between entities
+- **Detailed Entity View** (drill-down from entity summary):
   - Column-level profiling results in tabular format
   - Expandable rows for detailed column statistics
   - Side-by-side column comparison
@@ -210,11 +245,18 @@ A scalable data profiling tool designed to analyze large datasets from various s
   - Archive/restore functionality
 
 ### 6. User Interface Features
-- **Source & Entity Configuration**:
+- **Source & Dataset Configuration**:
   - Add/edit/test data source connections
-  - Browse available entities (tables, files, datasets)
-  - Multi-select entities for profiling
-  - Save entity selection as templates
+  - Select dataset to profile (schema, database, directory)
+  - Browse entities within the selected dataset
+  - Optional entity filtering (include/exclude specific entities)
+  - Save filter patterns as templates
+- **Database Profiling Configuration**:
+  - **For Tables**: Select all columns or choose specific columns to profile
+  - **Custom Query Mode**: Enter SQL query for profiling instead of table selection
+  - Query editor with syntax highlighting and validation
+  - Preview query results before profiling
+  - Save frequently used queries as templates
 - Profiling rule selection and customization
 - **Job Execution Progress**:
   - Real-time progress indicators (percentage complete)
@@ -278,7 +320,7 @@ A scalable data profiling tool designed to analyze large datasets from various s
 - Python 3.9+
 - FastAPI
 - Async processing: asyncio
-- Database: PostgreSQL (metadata storage)
+- Database: Oracle (metadata storage)
 - Data Processing: Pandas, Polars, or Dask
 - Database Connectors:
   - **PostgreSQL**: psycopg3 (official PostgreSQL driver with async support)
@@ -295,11 +337,12 @@ A scalable data profiling tool designed to analyze large datasets from various s
 ## Development Phases
 
 ### Phase 1: MVP (Minimum Viable Product)
-- Basic React frontend with connection configuration
+- Basic React frontend with dataset/connection configuration
 - FastAPI backend with REST endpoints
-- Support for PostgreSQL and CSV files
+- Support for Oracle and PostgreSQL datasets (schema-level profiling)
+- Entity filtering capabilities
 - Core profiling rules (statistics, nulls, data types)
-- Simple profile report display
+- Dataset-level summary with entity breakdown display
 
 ### Phase 2: Enhanced Features
 - Support for Oracle database and data lake APIs
