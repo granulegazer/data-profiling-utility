@@ -109,6 +109,13 @@ A scalable data profiling tool designed to analyze large datasets from various s
    - Detect near-unique columns (high cardinality)
    - Primary key suggestions based on non-null + unique criteria
 
+10. **PII Detection**
+   - Identify personally identifiable information
+   - Email, phone number, SSN pattern detection
+   - Credit card number detection
+   - GDPR compliance checks
+   - Sensitive data flagging
+
 #### Custom Profiling Rules
 1. **Business-Specific Validations**
    - Domain-specific value range checks
@@ -124,12 +131,7 @@ A scalable data profiling tool designed to analyze large datasets from various s
    - Trend analysis over time
    - Sudden distribution changes
 
-4. **PII Detection**
-   - Identify personally identifiable information
-   - Email, phone number, SSN pattern detection
-   - GDPR compliance checks
-
-5. **Custom Thresholds**
+4. **Custom Thresholds**
    - User-defined acceptable ranges
    - Configurable warning/error thresholds
    - Business KPI validation
