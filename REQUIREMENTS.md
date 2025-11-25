@@ -93,7 +93,7 @@ A scalable data profiling tool designed to analyze large datasets from various s
 
 ### 2. Profiling Rules
 
-#### Generic Enterprise Rules (OEDQ/IDQ Compatible)
+#### Generic Enterprise Rules
 1. **Column Statistics**
    - Record count
    - Null count and null percentage
@@ -176,13 +176,7 @@ A scalable data profiling tool designed to analyze large datasets from various s
    - Configurable warning/error thresholds
    - Business KPI validation
 
-### 3. Big Data Processing
-- **Distributed Processing**: Support for parallel processing of large datasets
-- **Sampling Strategy**: Intelligent sampling for initial analysis with full scan option
-- **Memory Management**: Stream processing to handle datasets larger than available RAM
-- **Performance Optimization**: Columnar processing, lazy evaluation, query optimization
-
-### 4. Output Storage
+### 3. Output Storage
 - **Oracle Database (Metadata & Results Storage)**:
   - Job execution metadata (job ID, timestamps, status, parameters)
   - Dataset metadata (source, dataset name, entity counts)
@@ -239,7 +233,7 @@ A scalable data profiling tool designed to analyze large datasets from various s
     - overall_quality_score, metric_details (CLOB - JSON)
   ```
 
-### 5. Results Viewing & Reporting
+### 4. Results Viewing & Reporting
 - **Dataset Profile Dashboard**:
   - Dataset-level overview: aggregated metrics across all entities
   - Overall data quality score for the dataset
@@ -288,7 +282,7 @@ A scalable data profiling tool designed to analyze large datasets from various s
   - Delete old profiling results
   - Archive/restore functionality
 
-### 6. User Interface Features
+### 5. User Interface Features
 - **Source & Dataset Configuration**:
   - Add/edit/test data source connections
   - Select dataset to profile (schema, database, directory)
@@ -326,14 +320,13 @@ A scalable data profiling tool designed to analyze large datasets from various s
 ## Non-Functional Requirements
 
 ### Performance
-- Process datasets with 100M+ records
+- Efficient processing of datasets
 - Response time < 3 seconds for UI interactions
 - API response time < 500ms for metadata operations
 - Support concurrent profiling jobs (minimum 10 simultaneous jobs)
 
 ### Scalability
 - Horizontal scaling for backend services
-- Support for distributed processing frameworks (optional: Dask, Ray, Spark)
 - Database connection pooling
 - Caching for frequently accessed metadata
 
@@ -454,7 +447,6 @@ A scalable data profiling tool designed to analyze large datasets from various s
 
 ### Phase 3: Advanced Capabilities
 - Custom rule engine
-- Big data optimizations (sampling, parallel processing)
 - Advanced visualizations
 - Alerting and notifications
 - API for programmatic access
@@ -467,7 +459,7 @@ A scalable data profiling tool designed to analyze large datasets from various s
 - Performance monitoring and optimization
 
 ## Success Criteria
-- Successfully profile datasets with 100M+ records in under 10 minutes
+- Successfully profile datasets efficiently
 - Support all specified data sources and formats
 - 99% uptime for production environments
 - User satisfaction score > 4/5
