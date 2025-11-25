@@ -130,6 +130,10 @@ A scalable data profiling tool designed to analyze large datasets from various s
    - Validity (% conforming to expected patterns)
    - Consistency (cross-column validation)
    - Accuracy indicators
+   - **Data Quality Grade**: Classification based on overall score
+     - **Gold**: High quality (>= 90% quality score)
+     - **Silver**: Medium quality (70-89% quality score)
+     - **Bronze**: Low quality (< 70% quality score)
 
 7. **Value Distribution**
    - Frequency distribution
@@ -177,25 +181,24 @@ A scalable data profiling tool designed to analyze large datasets from various s
    - Business KPI validation
 
 ### 3. Output Storage
-- **Oracle Database (Metadata & Results Storage)**:
+- **Oracle Database (Metadata Storage)**:
   - Job execution metadata (job ID, timestamps, status, parameters)
   - Dataset metadata (source, dataset name, entity counts)
   - Entity metadata (entity name, row counts, column counts)
   - Connection configurations (encrypted credentials)
   - User preferences and settings
-- **Profiling Results Storage in Oracle**:
-  - Store results in format most convenient for each output type
-  - **Structured Data** (column statistics, metrics): Store in Oracle tables
-    - Relational format for easy querying and filtering
-    - Column_Statistics, Data_Quality_Metrics tables
-  - **Semi-Structured/Complex Data**: Store as JSON/XML in CLOB columns
-    - Value distributions: JSON in CLOB column
-    - Frequency histograms: JSON in CLOB column
-    - Pattern analysis results: JSON in CLOB column
-    - Large text outputs: CLOB columns
-    - Visual data representations: JSON/SVG in CLOB columns
+  - File paths/references to profiling results stored in filesystem
+- **Profiling Results Storage (Filesystem)**:
+  - JSON format stored in filesystem or network storage
+  - Hierarchical structure: `{job_id}/{dataset_name}/{entity_name}/`
+  - **File Structure**:
+    - `profile_summary.json` - Entity-level summary statistics
+    - `column_statistics.json` - Structured column metrics
+    - `value_distributions.json` - Value distribution data
+    - `pattern_analysis.json` - Pattern detection results
+    - `quality_metrics.json` - Data quality scores and details
   - Retention policy: configurable (default 90 days)
-  - No external filesystem storage - all data in Oracle database
+  - **Note**: Phase 2 will migrate results storage to Oracle database (CLOB/structured tables)
 - **Storage Schema**:
   ```
   Profiling_Job:
@@ -206,7 +209,8 @@ A scalable data profiling tool designed to analyze large datasets from various s
   Dataset_Profile:
     - dataset_profile_id, job_id, dataset_name
     - total_entities, total_rows, total_columns, profiled_at
-    - overall_quality_score, storage_size
+    - overall_quality_score, overall_quality_grade (GOLD/SILVER/BRONZE)
+    - storage_size
   Entity_Profile_Summary:
     - entity_profile_id, dataset_profile_id, entity_name, entity_type
     - source_query (NULL for tables, SQL for custom queries, NULL for API)
@@ -215,38 +219,36 @@ A scalable data profiling tool designed to analyze large datasets from various s
     - domain_name (NULL for DB, domain value for data lake)
     - xpath_or_attribute_path (NULL for DB, path expression for data lake)
     - row_count, column_count, null_percentage, data_quality_score
+    - data_quality_grade (GOLD/SILVER/BRONZE)
     - status, started_at, completed_at
     - rows_processed, processing_speed_rows_per_sec
-  Column_Statistics:
-    - stat_id, entity_profile_id, column_name, data_type
-    - null_pct, unique_count, distinct_count, min_value, max_value
-    - mean_value, median_value, std_dev, etc.
-  Column_Profiling_Details:
-    - detail_id, entity_profile_id, column_name
-    - value_distribution (CLOB - JSON format)
-    - pattern_analysis (CLOB - JSON format)
-    - frequency_histogram (CLOB - JSON format)
-    - top_values (CLOB - JSON format)
-  Data_Quality_Metrics:
-    - metric_id, entity_profile_id
-    - completeness_score, validity_score, consistency_score
-    - overall_quality_score, metric_details (CLOB - JSON)
+  Profile_Results_File_Path:
+    - path_id, entity_profile_id
+    - base_directory_path
+    - profile_summary_file_path
+    - column_statistics_file_path
+    - value_distributions_file_path
+    - pattern_analysis_file_path
+    - quality_metrics_file_path
+    - total_file_size_bytes
   ```
 
 ### 4. Results Viewing & Reporting
 - **Dataset Profile Dashboard**:
   - Dataset-level overview: aggregated metrics across all entities
-  - Overall data quality score for the dataset
+  - Overall data quality score and grade (Gold/Silver/Bronze) for the dataset
+  - Quality grade distribution chart (count of Gold/Silver/Bronze entities)
   - Total entities, rows, columns in the dataset
   - Distribution of data quality across entities
   - Trend indicators (if historical data available)
 - **Entity Summary View**:
   - List of all entities within the profiled dataset
-  - Entity-level summary cards with key metrics (row count, column count, quality score)
+  - Entity-level summary cards with key metrics (row count, column count, quality score, quality grade)
   - Display entity type: table (full/partial columns) or custom query
   - Show source query for query-based profiles
   - Show selected columns for partial table profiles
-  - Filterable and sortable entity list (by name, size, quality score, type)
+  - **Quality Grade Badge**: Color-coded (Gold/Silver/Bronze) visual indicator
+  - Filterable and sortable entity list (by name, size, quality score, quality grade, type)
   - Search entities within the dataset
   - Quick comparison between entities
 - **Detailed Entity View** (drill-down from entity summary):
@@ -377,7 +379,7 @@ A scalable data profiling tool designed to analyze large datasets from various s
 - Orchestration: Docker Compose (dev), Kubernetes (prod)
 - Message Queue: Redis or RabbitMQ (for async jobs)
 - Cache: Redis
-- Storage: Oracle database (all metadata and profiling results)
+- Storage: Oracle database (metadata), Filesystem (profiling results)
 
 ## Development Phases
 
@@ -420,7 +422,8 @@ A scalable data profiling tool designed to analyze large datasets from various s
   - Expandable rows for detailed statistics
 - **Visualizations**:
   - Value distribution histograms
-  - Data quality gauges/scorecards
+  - Data quality gauges/scorecards with grade badges (Gold/Silver/Bronze)
+  - Quality grade distribution chart across entities
   - Pattern frequency charts
   - Null percentage indicators
   - Candidate key diagrams
@@ -433,11 +436,15 @@ A scalable data profiling tool designed to analyze large datasets from various s
 - Processing speed metrics (rows/second)
 
 #### Storage
-- Oracle database for metadata and results
-- CLOB storage for JSON data (distributions, patterns, histograms)
-- Structured tables for statistics and metrics
+- Oracle database for job/dataset/entity metadata
+- Filesystem storage for profiling results (JSON files)
+- File path references stored in Oracle
 
 ### Phase 2: Enhanced Features
+- **Migrate profiling results storage from filesystem to Oracle database**
+  - Structured data in Oracle tables (Column_Statistics, Data_Quality_Metrics)
+  - Semi-structured data in CLOB columns (distributions, patterns, histograms)
+  - Improved query performance and data integrity
 - Support for data lake APIs (REST API, XPath/JSON path parsing)
 - Flat file support (CSV, JSON, XML, Excel)
 - Job history and result archival
