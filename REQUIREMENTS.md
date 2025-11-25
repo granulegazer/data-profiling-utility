@@ -19,6 +19,16 @@ A scalable data profiling tool designed to analyze large datasets from various s
 ### Supported Sources
 1. **Data Lakes**
    - Access via REST API calls
+   - **Configuration Requirements**:
+     - Source: API endpoint/base URL
+     - Domain: Selected from pre-defined domain list
+     - XPath/Attribute Names: Specify data location within response
+     - Entity List: List of entities to fetch via API calls
+   - **Data Extraction**:
+     - Pull entities one-by-one or in batch via REST API
+     - Parse response using XPath (for XML) or attribute paths (for JSON)
+     - Support for nested/hierarchical data structures
+     - Handle pagination for large result sets
    - Batch and streaming data ingestion
 
 2. **Relational Databases**
@@ -65,6 +75,21 @@ A scalable data profiling tool designed to analyze large datasets from various s
     - Query validation before execution
     - Support for complex queries (JOINs, WHERE clauses, CTEs)
     - Treat query result as a virtual entity for profiling
+- **Data Lake-Specific Profiling Options**:
+  - **API Configuration**:
+    - Source: API endpoint URL
+    - Domain: Select from pre-defined domain list (dropdown/autocomplete)
+    - XPath expressions for XML responses
+    - Attribute paths for JSON responses (e.g., `data.customers[*].profile`)
+  - **Entity Retrieval**:
+    - Entity list specifies which entities to fetch via API
+    - API call per entity or batch API calls
+    - Dynamic URL construction using entity names
+    - Authentication token/API key management
+  - **Response Parsing**:
+    - Extract data using XPath or JSON path expressions
+    - Flatten nested structures for profiling
+    - Handle array/list data within responses
 
 ### 2. Profiling Rules
 
@@ -158,18 +183,25 @@ A scalable data profiling tool designed to analyze large datasets from various s
 - **Performance Optimization**: Columnar processing, lazy evaluation, query optimization
 
 ### 4. Output Storage
-- **Metadata Database (Oracle)**:
+- **Oracle Database (Metadata & Results Storage)**:
   - Job execution metadata (job ID, timestamps, status, parameters)
   - Dataset metadata (source, dataset name, entity counts)
   - Entity metadata (entity name, row counts, column counts)
   - Connection configurations (encrypted credentials)
   - User preferences and settings
-- **Profiling Results Storage**:
-  - JSON format stored in filesystem or network storage
-  - Hierarchical structure: `{job_id}/{dataset_name}/{entity_name}/profile_results.json`
-  - Summary statistics stored in Oracle for quick queries
-  - Detailed results (distributions, patterns) in JSON files
+- **Profiling Results Storage in Oracle**:
+  - Store results in format most convenient for each output type
+  - **Structured Data** (column statistics, metrics): Store in Oracle tables
+    - Relational format for easy querying and filtering
+    - Column_Statistics, Data_Quality_Metrics tables
+  - **Semi-Structured/Complex Data**: Store as JSON/XML in CLOB columns
+    - Value distributions: JSON in CLOB column
+    - Frequency histograms: JSON in CLOB column
+    - Pattern analysis results: JSON in CLOB column
+    - Large text outputs: CLOB columns
+    - Visual data representations: JSON/SVG in CLOB columns
   - Retention policy: configurable (default 90 days)
+  - No external filesystem storage - all data in Oracle database
 - **Storage Schema**:
   ```
   Profiling_Job:
@@ -183,16 +215,28 @@ A scalable data profiling tool designed to analyze large datasets from various s
     - overall_quality_score, storage_size
   Entity_Profile_Summary:
     - entity_profile_id, dataset_profile_id, entity_name, entity_type
-    - source_query (NULL for tables, SQL for custom queries)
+    - source_query (NULL for tables, SQL for custom queries, NULL for API)
     - selected_columns (NULL for all columns, comma-separated list for selection)
+    - api_endpoint (NULL for DB, API URL for data lake entities)
+    - domain_name (NULL for DB, domain value for data lake)
+    - xpath_or_attribute_path (NULL for DB, path expression for data lake)
     - row_count, column_count, null_percentage, data_quality_score
     - status, started_at, completed_at
     - rows_processed, processing_speed_rows_per_sec
   Column_Statistics:
     - stat_id, entity_profile_id, column_name, data_type
-    - null_pct, unique_count, distinct_count, etc.
-  Profile_Results_Path:
-    - entity_profile_id, json_storage_path, file_size
+    - null_pct, unique_count, distinct_count, min_value, max_value
+    - mean_value, median_value, std_dev, etc.
+  Column_Profiling_Details:
+    - detail_id, entity_profile_id, column_name
+    - value_distribution (CLOB - JSON format)
+    - pattern_analysis (CLOB - JSON format)
+    - frequency_histogram (CLOB - JSON format)
+    - top_values (CLOB - JSON format)
+  Data_Quality_Metrics:
+    - metric_id, entity_profile_id
+    - completeness_score, validity_score, consistency_score
+    - overall_quality_score, metric_details (CLOB - JSON)
   ```
 
 ### 5. Results Viewing & Reporting
@@ -257,6 +301,14 @@ A scalable data profiling tool designed to analyze large datasets from various s
   - Query editor with syntax highlighting and validation
   - Preview query results before profiling
   - Save frequently used queries as templates
+- **Data Lake Profiling Configuration**:
+  - Input API source endpoint URL
+  - Select domain from pre-defined domain dropdown list
+  - Specify XPath expressions (for XML) or attribute paths (for JSON)
+  - Provide entity list (manual entry, CSV import, or bulk paste)
+  - Test API connection and response structure
+  - Preview sample data extraction before profiling
+  - Save API configurations as templates
 - Profiling rule selection and customization
 - **Job Execution Progress**:
   - Real-time progress indicators (percentage complete)
@@ -332,7 +384,7 @@ A scalable data profiling tool designed to analyze large datasets from various s
 - Orchestration: Docker Compose (dev), Kubernetes (prod)
 - Message Queue: Redis or RabbitMQ (for async jobs)
 - Cache: Redis
-- Storage: Filesystem or network storage for reports
+- Storage: Oracle database (all metadata and profiling results)
 
 ## Development Phases
 
