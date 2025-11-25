@@ -288,15 +288,26 @@ A scalable data profiling tool designed to analyze large datasets from various s
 - **Source & Dataset Configuration**:
   - Add/edit/test data source connections
   - Select dataset to profile (schema, database, directory)
-  - Browse entities within the selected dataset
+  - **Browse & Select Entities**:
+    - **Option 1: Browse Tables** - Visual table browser with checkboxes to select specific tables
+    - **Option 2: Custom Query** - Toggle to query mode to write custom SQL instead of selecting tables
+    - Toggle between table selection and query mode
+    - Multi-select tables from the dataset
+    - Preview table metadata (row count, column count) before profiling
   - Optional entity filtering (include/exclude specific entities)
   - Save filter patterns as templates
 - **Database Profiling Configuration**:
-  - **For Tables**: Select all columns or choose specific columns to profile
-  - **Custom Query Mode**: Enter SQL query for profiling instead of table selection
-  - Query editor with syntax highlighting and validation
-  - Preview query results before profiling
-  - Save frequently used queries as templates
+  - **For Selected Tables**: 
+    - Profile all columns (default)
+    - OR select specific columns to profile (column picker UI)
+    - Display column metadata (data type, nullable)
+  - **For Custom Query Mode**: 
+    - SQL editor with syntax highlighting and validation
+    - Query validation before profiling
+    - Preview query results (first 100 rows)
+    - Estimated result set size
+    - Save frequently used queries as templates
+    - Named queries (treat query as a virtual entity with custom name)
 - **Data Lake Profiling Configuration**:
   - Input API source endpoint URL
   - Select domain from pre-defined domain dropdown list
@@ -464,6 +475,237 @@ A scalable data profiling tool designed to analyze large datasets from various s
 - PII detection and data masking
 - Integration with data catalogs
 - Performance monitoring and optimization
+
+## User Interface & Navigation Flow
+
+### Screen Structure
+The application consists of **5 main screens**:
+
+1. **Home/Landing Page** - Dashboard with quick access to jobs
+2. **Dataset Configuration Screen** - Multi-step job setup wizard
+3. **Dataset Profile Dashboard** - Overview and entity list
+4. **Detailed Entity View** - Drill-down into specific entity results
+5. **Job History Screen** - Historical jobs management
+
+### Navigation Flow
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                      Top Navigation Bar                      │
+│  [Data Profiling Utility] | Jobs | History | Settings       │
+└─────────────────────────────────────────────────────────────┘
+
+1. HOME/LANDING PAGE
+   │
+   ├─ Quick stats (total jobs, recent activity)
+   ├─ Recent profiling jobs list
+   ├─ Quick links to recent datasets
+   │
+   ├─→ [+ New Profiling Job] Button
+   │   │
+   │   └─→ 2. DATASET CONFIGURATION SCREEN (Multi-step Wizard)
+   │       │
+   │       ├─ STEP 1: Data Source Setup
+   │       │  • Select connection type (Database/Data Lake/File)
+   │       │  • Enter connection details (host, port, credentials)
+   │       │  • [Test Connection] button
+   │       │  • [Save Connection] for reuse
+   │       │  └─→ [Next] button
+   │       │
+   │       ├─ STEP 2: Dataset & Entity Selection
+   │       │  • Select dataset (schema/database/directory)
+   │       │  • **BROWSE MODE TOGGLE**:
+   │       │    ┌────────────────────────────────────┐
+   │       │    │ [○ Browse Tables] [○ Custom Query] │
+   │       │    └────────────────────────────────────┘
+   │       │  
+   │       │  • **IF Browse Tables Mode**:
+   │       │    - Display table list with metadata (row count, columns)
+   │       │    - Multi-select checkboxes for tables
+   │       │    - Search/filter tables by name
+   │       │    - Select all/none options
+   │       │    - Preview table structure
+   │       │  
+   │       │  • **IF Custom Query Mode**:
+   │       │    - SQL editor with syntax highlighting
+   │       │    - [Validate Query] button
+   │       │    - [Preview Results] (first 100 rows)
+   │       │    - Query name input (treat as virtual entity name)
+   │       │    - Estimated result set size display
+   │       │    - [Save as Template] option
+   │       │  
+   │       │  • Optional: Entity filtering patterns
+   │       │  └─→ [Back] [Next] buttons
+   │       │
+   │       ├─ STEP 3: Profiling Options
+   │       │  • **For Selected Tables**:
+   │       │    - [○ Profile All Columns] (default)
+   │       │    - [○ Select Specific Columns]
+   │       │    - If specific: Column picker with data types shown
+   │       │  
+   │       │  • **For Custom Queries**:
+   │       │    - Columns detected automatically from query
+   │       │    - Option to exclude specific columns
+   │       │  
+   │       │  • Profiling rule selection (optional - Phase 2)
+   │       │  • Custom thresholds configuration (optional)
+   │       │  └─→ [Back] [Start Profiling] buttons
+   │       │
+   │       └─→ [Start Profiling] Button
+   │           │
+   │           └─→ 3. DATASET PROFILE DASHBOARD
+   │               │
+   │               ├─ **Top Section**: Real-time Job Progress
+   │               │  • Progress bar with percentage
+   │               │  • Entities: queued/in-progress/completed/failed
+   │               │  • Processing speed (rows/sec)
+   │               │  • Estimated time to completion (ETC)
+   │               │  • [Cancel Job] button (if in progress)
+   │               │
+   │               ├─ **Middle Section**: Dataset-Level Overview
+   │               │  • Overall data quality score & grade badge
+   │               │  • Quality grade distribution chart (Gold/Silver/Bronze)
+   │               │  • Total entities, rows, columns
+   │               │  • Dataset metadata display
+   │               │
+   │               ├─ **Bottom Section**: Entity List/Grid
+   │               │  • Summary cards for each entity
+   │               │  • Entity type badge (Table/Table-Partial/Query)
+   │               │  • Key metrics: rows, columns, quality score, grade
+   │               │  • Search bar for entities
+   │               │  • Filter by: quality grade, type, status
+   │               │  • Sort by: name, size, quality, completion time
+   │               │  • [Export Report] button
+   │               │
+   │               └─→ [Click Entity Card/Row]
+   │                   │
+   │                   └─→ 4. DETAILED ENTITY VIEW
+   │                       │
+   │                       ├─ **Header Section**:
+   │                       │  • Entity name & type
+   │                       │  • Quality grade badge (Gold/Silver/Bronze)
+   │                       │  • Source info (table name or query text)
+   │                       │  • Profiling timestamp
+   │                       │  • Breadcrumb: Home > Job > Dataset > Entity
+   │                       │
+   │                       ├─ **Navigation Tabs**:
+   │                       │  • [Overview] - Summary statistics
+   │                       │  • [Column Statistics] - Detailed column metrics
+   │                       │  • [Data Quality] - Quality metrics breakdown
+   │                       │  • [Patterns & Distributions] - Value patterns
+   │                       │  • [Candidate Keys] - Key discovery results
+   │                       │  • [PII Detection] - Sensitive data findings
+   │                       │
+   │                       ├─ **Content Area**:
+   │                       │  • Column-level statistics table
+   │                       │  • Expandable rows for detailed metrics
+   │                       │  • Visualizations (histograms, charts, gauges)
+   │                       │  • Interactive filters and sorting
+   │                       │  • Column comparison side-by-side
+   │                       │
+   │                       ├─ **Actions**:
+   │                       │  • [← Back to Dashboard]
+   │                       │  • [Export Entity Report] (JSON/CSV/PDF)
+   │                       │  • [Compare with Previous] (Phase 2)
+   │                       │  • [Copy Column Stats]
+   │                       │
+   │                       └─→ [Back] returns to Dashboard
+   │
+   └─→ [View Job History] or Top Nav: [History]
+       │
+       └─→ 5. JOB HISTORY SCREEN
+           │
+           ├─ **Filter Panel**:
+           │  • Date range picker
+           │  • Source type filter
+           │  • Status filter (completed/failed/cancelled)
+           │  • Dataset/entity search
+           │
+           ├─ **Jobs Table/List**:
+           │  • Job ID, dataset name, source type
+           │  • Execution date & duration
+           │  • Status indicator
+           │  • Entity count
+           │  • Actions: [View] [Delete] [Archive]
+           │
+           ├─ **Bulk Actions**:
+           │  • Select multiple jobs
+           │  • [Delete Selected]
+           │  • [Archive Selected]
+           │
+           └─→ [Click Job Row or View]
+               │
+               └─→ 3. DATASET PROFILE DASHBOARD (read-only mode)
+                   • Shows completed job results
+                   • No progress bar (job completed)
+                   • Full navigation to entity details available
+```
+
+### User Journey Examples
+
+#### **Journey 1: New User - Profile Database Tables**
+```
+Home → [+ New Job] → 
+Step 1: Select PostgreSQL, enter connection → [Test] → [Next] →
+Step 2: Select schema "public" → [Browse Tables mode] → 
+        Select 3 tables: customers, orders, products → [Next] →
+Step 3: [Profile All Columns] → [Start Profiling] →
+Dashboard: Watch progress (50%... 100%) → 
+Click "customers" entity card →
+Detailed View: Review column statistics → [Back] →
+Dashboard: [Export Report]
+```
+
+#### **Journey 2: Advanced User - Custom Query**
+```
+Home → [+ New Job] →
+Step 1: Select existing saved connection → [Next] →
+Step 2: [Custom Query mode] → 
+        Write SQL: "SELECT c.*, o.total FROM customers c JOIN orders o..." →
+        [Validate Query] → [Preview Results] → 
+        Name: "customer_orders_view" → [Next] →
+Step 3: Default options → [Start Profiling] →
+Dashboard → Click "customer_orders_view" entity →
+Detailed View: Analyze joined data quality
+```
+
+#### **Journey 3: Returning User - Review History**
+```
+Home → Recent Jobs: Click "sales_db_profile (Nov 24)" →
+Dashboard (read-only) → Browse entities →
+Click "transactions" → Detailed View →
+[Compare with Previous] (Phase 2 feature)
+```
+
+#### **Journey 4: Data Lake API Profiling**
+```
+Home → [+ New Job] →
+Step 1: Select "Data Lake API" → Enter API endpoint → [Test] → [Next] →
+Step 2: Select domain from dropdown → 
+        Enter entity list (paste CSV) →
+        Specify JSON attribute path: "data.records[*]" → [Next] →
+Step 3: Default options → [Start Profiling] →
+Dashboard: Monitor API calls and profiling progress
+```
+
+### Key Navigation Principles
+
+1. **Persistent Top Navigation**: Always accessible - Home, Jobs, History, Settings
+2. **Breadcrumbs**: Show current location and enable quick backtracking
+3. **Progressive Disclosure**: Wizard-based configuration reveals options step-by-step
+4. **Mode Switching**: Clear toggle between Browse Tables and Custom Query modes
+5. **Deep Linking**: Shareable URLs for specific jobs/entities
+6. **Context Preservation**: Save partial configurations if user navigates away
+7. **Back Navigation**: Always provide clear path to return to previous screen
+8. **Modal Usage**: Use modals for non-critical actions (export, settings)
+9. **Responsive Design**: All screens optimized for desktop (primary) and tablet
+
+### Navigation State Management
+
+- **Active Job**: Show "Job in Progress" indicator in top nav if profiling running
+- **Unsaved Changes**: Warn before leaving configuration screen with unsaved data
+- **Session Persistence**: Remember last used connection and settings
+- **Recent Items**: Quick access to recently profiled datasets
 
 ## Success Criteria
 - Successfully profile datasets efficiently
