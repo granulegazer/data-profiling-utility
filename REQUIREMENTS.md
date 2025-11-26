@@ -436,9 +436,9 @@ A scalable data profiling tool designed to analyze large datasets from various s
 The application consists of **5 main screens**:
 
 1. **Home/Landing Page** - Dashboard with quick access to jobs
-2. **Dataset Configuration Screen** - Multi-step job setup wizard
+2. **Dataset Configuration Screen** - 4-step job setup wizard
 3. **Dataset Profile Dashboard** - Overview and entity list
-4. **Detailed Entity View** - Drill-down into specific entity results
+4. **Detailed Attribute View** - Drill-down into specific entity results
 5. **Job History Screen** - Historical jobs management
 
 ### Navigation Flow
@@ -521,7 +521,7 @@ The application consists of **5 main screens**:
    │       │  • Optional: Entity filtering patterns
    │       │  └─→ [Back] [Next] buttons
    │       │
-   │       ├─ STEP 3: Profiling Options
+   │       ├─ STEP 3: Column Selection
    │       │  • **For Selected Tables**:
    │       │    - [○ Profile All Columns] (default)
    │       │    - [○ Select Specific Columns]
@@ -537,9 +537,33 @@ The application consists of **5 main screens**:
    │       │    - Column picker based on detected schema
    │       │    - Data type inference settings
    │       │    - Sample size for profiling (full file or first N rows)
+   │       │  └─→ [Back] [Next] buttons
+   │       │
+   │       ├─ STEP 4: Ruleset Selection
+   │       │  • **Dataset-Level Rules** (Group checkbox - selectable)
+   │       │    - ☑ Enable all 4 dataset-level rules
+   │       │    - Expandable section showing detailed rules (read-only):
+   │       │      • Dataset Statistics
+   │       │      • Dataset-Level Data Quality Metrics
+   │       │      • Referential Integrity
+   │       │      • Candidate Key Discovery
    │       │  
-   │       │  • Profiling rule selection (optional - Phase 2)
-   │       │  • Custom thresholds configuration (optional)
+   │       │  • **Attribute-Level Rules** (Group checkbox - selectable)
+   │       │    - ☑ Enable all 8 attribute-level rules
+   │       │    - Expandable section showing detailed rules (read-only):
+   │       │      • Column Statistics
+   │       │      • Data Type Analysis
+   │       │      • Numeric Analysis
+   │       │      • String Analysis
+   │       │      • Date/Time Analysis
+   │       │      • Column-Level Data Quality
+   │       │      • Value Distribution
+   │       │      • PII Detection
+   │       │  
+   │       │  • Default: Both groups selected (all rules enabled)
+   │       │  • User can uncheck group to disable all rules in that category
+   │       │  • Individual rules displayed for transparency but not individually selectable
+   │       │  • Custom thresholds configuration (optional - Phase 2)
    │       │  └─→ [Back] [Start Profiling] buttons
    │       │
    │       └─→ [Start Profiling] Button

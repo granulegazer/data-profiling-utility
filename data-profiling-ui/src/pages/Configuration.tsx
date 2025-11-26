@@ -28,6 +28,10 @@ function Configuration() {
   const [previewData, setPreviewData] = useState<{fileName: string, headers: string[], rows: string[][]} | null>(null);
   const [columnSelection, setColumnSelection] = useState<'all' | 'specific'>('all');
   const [selectedColumns, setSelectedColumns] = useState<string[]>([]);
+  const [datasetLevelRules, setDatasetLevelRules] = useState(true);
+  const [attributeLevelRules, setAttributeLevelRules] = useState(true);
+  const [showDatasetRules, setShowDatasetRules] = useState(false);
+  const [showAttributeRules, setShowAttributeRules] = useState(false);
 
   const handlePreview = async (file: UploadedFile) => {
     try {
@@ -72,7 +76,15 @@ function Configuration() {
       }
     }
     
-    if (step < 3) {
+    // Step 3 validation: if specific columns selected, need at least 1
+    if (step === 3) {
+      if (columnSelection === 'specific' && selectedColumns.length === 0) {
+        alert('Please select at least one column to profile');
+        return;
+      }
+    }
+    
+    if (step < 4) {
       setStep(step + 1);
     }
   };
@@ -134,6 +146,12 @@ function Configuration() {
       return;
     }
 
+    // Validate at least one ruleset is selected
+    if (!datasetLevelRules && !attributeLevelRules) {
+      alert('Please select at least one ruleset to apply');
+      return;
+    }
+
     try {
       const jobData = {
         name: jobName,
@@ -146,7 +164,11 @@ function Configuration() {
         },
         treat_files_as_dataset: true,
         sample_size: sampleSize ? parseInt(sampleSize) : null,
-        selected_columns: columnSelection === 'specific' ? selectedColumns : null
+        selected_columns: columnSelection === 'specific' ? selectedColumns : null,
+        rulesets: {
+          dataset_level: datasetLevelRules,
+          attribute_level: attributeLevelRules
+        }
       };
 
       const response = await api.post('/jobs', jobData);
@@ -163,7 +185,7 @@ function Configuration() {
         <div>
           <h1>Configure Profiling Job</h1>
           <p className="lede">
-            Step {step} of 3: {step === 1 ? 'Job Configuration & Data Source' : step === 2 ? 'File Parsing Configuration' : 'Profiling Options'}
+            Step {step} of 4: {step === 1 ? 'Job Configuration & Data Source' : step === 2 ? 'File Parsing Configuration' : step === 3 ? 'Column Selection & Sample Size' : 'Ruleset Selection'}
           </p>
         </div>
       </section>
@@ -577,9 +599,9 @@ function Configuration() {
         </SectionCard>
       )}
 
-      {/* Step 3: Profiling Options */}
+      {/* Step 3: Column Selection & Sample Size */}
       {step === 3 && (
-        <SectionCard title="Step 3: Profiling Options" subtitle="Configure column selection and profiling rules">
+        <SectionCard title="Step 3: Column Selection & Sample Size" subtitle="Select which columns to profile and configure sample size">
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
             {/* Column Selection */}
             <div>
@@ -726,7 +748,241 @@ function Configuration() {
 
           <div style={{ marginTop: '2rem', display: 'flex', justifyContent: 'space-between' }}>
             <button className="btn btn--ghost" onClick={handleBack}>← Back</button>
-            <button className="btn btn--primary" onClick={handleStartProfiling}>Start Profiling</button>
+            <button className="btn btn--primary" onClick={handleNext}>Next →</button>
+          </div>
+        </SectionCard>
+      )}
+
+      {/* Step 4: Ruleset Selection */}
+      {step === 4 && (
+        <SectionCard title="Step 4: Ruleset Selection" subtitle="Choose which profiling rule groups to apply">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            {/* Dataset-Level Rules */}
+            <div 
+              style={{ 
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                borderRadius: '12px',
+                background: 'rgba(255, 255, 255, 0.02)',
+                overflow: 'hidden'
+              }}
+            >
+              <div 
+                style={{ 
+                  padding: '1rem 1.25rem',
+                  background: datasetLevelRules ? 'rgba(75, 123, 255, 0.08)' : 'rgba(255, 255, 255, 0.02)',
+                  borderBottom: showDatasetRules ? '1px solid rgba(255, 255, 255, 0.08)' : 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.75rem',
+                  cursor: 'pointer'
+                }}
+                onClick={() => setShowDatasetRules(!showDatasetRules)}
+              >
+                <input 
+                  type="checkbox" 
+                  checked={datasetLevelRules}
+                  onChange={(e) => {
+                    e.stopPropagation();
+                    setDatasetLevelRules(e.target.checked);
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                  style={{ width: 'auto', cursor: 'pointer', margin: 0 }}
+                />
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <span style={{ fontSize: '1.25rem' }}>📊</span>
+                    <span style={{ color: '#e8ecf6', fontWeight: 600 }}>Dataset-Level Rules</span>
+                    <span style={{ 
+                      fontSize: '0.75rem', 
+                      color: '#8f9bb3', 
+                      background: 'rgba(255, 255, 255, 0.08)', 
+                      padding: '0.125rem 0.5rem', 
+                      borderRadius: '4px' 
+                    }}>
+                      4 rules
+                    </span>
+                  </div>
+                  <p className="muted" style={{ fontSize: '0.875rem', margin: '0.25rem 0 0 0' }}>
+                    Overall dataset statistics, quality metrics, referential integrity, and key discovery
+                  </p>
+                </div>
+                <span style={{ color: '#8f9bb3', fontSize: '1.25rem', transition: 'transform 0.2s', transform: showDatasetRules ? 'rotate(180deg)' : 'rotate(0deg)' }}>
+                  ▼
+                </span>
+              </div>
+              
+              {showDatasetRules && (
+                <div style={{ padding: '1rem 1.25rem', background: 'rgba(255, 255, 255, 0.01)' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                    {[
+                      { icon: '📈', name: 'Dataset Statistics', desc: 'Record count, column count, dataset size, timestamps' },
+                      { icon: '✨', name: 'Dataset-Level Data Quality', desc: 'Completeness score, quality score/grade, PII risk' },
+                      { icon: '🔗', name: 'Referential Integrity', desc: 'Foreign key validation, orphan records, cross-table checks' },
+                      { icon: '🔑', name: 'Candidate Key Discovery', desc: 'Single-column keys, composite keys, uniqueness analysis' }
+                    ].map((rule, idx) => (
+                      <div 
+                        key={idx}
+                        style={{ 
+                          padding: '0.75rem',
+                          background: 'rgba(255, 255, 255, 0.02)',
+                          borderRadius: '8px',
+                          border: '1px solid rgba(255, 255, 255, 0.05)'
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
+                          <span>{rule.icon}</span>
+                          <span style={{ color: '#e8ecf6', fontSize: '0.875rem', fontWeight: 500 }}>{rule.name}</span>
+                        </div>
+                        <p className="muted" style={{ fontSize: '0.8125rem', margin: 0, paddingLeft: '1.75rem' }}>
+                          {rule.desc}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Attribute-Level Rules */}
+            <div 
+              style={{ 
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                borderRadius: '12px',
+                background: 'rgba(255, 255, 255, 0.02)',
+                overflow: 'hidden'
+              }}
+            >
+              <div 
+                style={{ 
+                  padding: '1rem 1.25rem',
+                  background: attributeLevelRules ? 'rgba(75, 123, 255, 0.08)' : 'rgba(255, 255, 255, 0.02)',
+                  borderBottom: showAttributeRules ? '1px solid rgba(255, 255, 255, 0.08)' : 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.75rem',
+                  cursor: 'pointer'
+                }}
+                onClick={() => setShowAttributeRules(!showAttributeRules)}
+              >
+                <input 
+                  type="checkbox" 
+                  checked={attributeLevelRules}
+                  onChange={(e) => {
+                    e.stopPropagation();
+                    setAttributeLevelRules(e.target.checked);
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                  style={{ width: 'auto', cursor: 'pointer', margin: 0 }}
+                />
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <span style={{ fontSize: '1.25rem' }}>🔍</span>
+                    <span style={{ color: '#e8ecf6', fontWeight: 600 }}>Attribute-Level Rules</span>
+                    <span style={{ 
+                      fontSize: '0.75rem', 
+                      color: '#8f9bb3', 
+                      background: 'rgba(255, 255, 255, 0.08)', 
+                      padding: '0.125rem 0.5rem', 
+                      borderRadius: '4px' 
+                    }}>
+                      8 rules
+                    </span>
+                  </div>
+                  <p className="muted" style={{ fontSize: '0.875rem', margin: '0.25rem 0 0 0' }}>
+                    Column-by-column analysis including statistics, data types, quality, distributions, and PII
+                  </p>
+                </div>
+                <span style={{ color: '#8f9bb3', fontSize: '1.25rem', transition: 'transform 0.2s', transform: showAttributeRules ? 'rotate(180deg)' : 'rotate(0deg)' }}>
+                  ▼
+                </span>
+              </div>
+              
+              {showAttributeRules && (
+                <div style={{ padding: '1rem 1.25rem', background: 'rgba(255, 255, 255, 0.01)' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                    {[
+                      { icon: '📊', name: 'Column Statistics', desc: 'Record count, null count, unique values, duplicates' },
+                      { icon: '🏷️', name: 'Data Type Analysis', desc: 'Inferred types, type consistency, format patterns' },
+                      { icon: '🔢', name: 'Numeric Analysis', desc: 'Min, max, mean, median, std dev, outliers' },
+                      { icon: '📝', name: 'String Analysis', desc: 'Length stats, pattern frequency, character sets' },
+                      { icon: '📅', name: 'Date/Time Analysis', desc: 'Date ranges, format patterns, invalid dates' },
+                      { icon: '✅', name: 'Column-Level Data Quality', desc: 'Completeness, validity, consistency, quality score' },
+                      { icon: '📈', name: 'Value Distribution', desc: 'Frequency distribution, top values, cardinality, mode' },
+                      { icon: '🔒', name: 'PII Detection', desc: 'Email, phone, SSN patterns, confidence scores' }
+                    ].map((rule, idx) => (
+                      <div 
+                        key={idx}
+                        style={{ 
+                          padding: '0.75rem',
+                          background: 'rgba(255, 255, 255, 0.02)',
+                          borderRadius: '8px',
+                          border: '1px solid rgba(255, 255, 255, 0.05)'
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
+                          <span>{rule.icon}</span>
+                          <span style={{ color: '#e8ecf6', fontSize: '0.875rem', fontWeight: 500 }}>{rule.name}</span>
+                        </div>
+                        <p className="muted" style={{ fontSize: '0.8125rem', margin: 0, paddingLeft: '1.75rem' }}>
+                          {rule.desc}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Warning if both unchecked */}
+            {!datasetLevelRules && !attributeLevelRules && (
+              <div 
+                style={{ 
+                  padding: '0.875rem 1rem',
+                  background: 'rgba(255, 193, 7, 0.1)',
+                  border: '1px solid rgba(255, 193, 7, 0.3)',
+                  borderRadius: '8px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.75rem'
+                }}
+              >
+                <span style={{ fontSize: '1.25rem' }}>⚠️</span>
+                <span style={{ color: '#ffc107', fontSize: '0.875rem', fontWeight: 500 }}>
+                  Please select at least one ruleset to continue
+                </span>
+              </div>
+            )}
+
+            {/* Info message */}
+            <div 
+              style={{ 
+                padding: '0.875rem 1rem',
+                background: 'rgba(75, 123, 255, 0.08)',
+                border: '1px solid rgba(75, 123, 255, 0.2)',
+                borderRadius: '8px',
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: '0.75rem'
+              }}
+            >
+              <span style={{ fontSize: '1.125rem' }}>ℹ️</span>
+              <div style={{ flex: 1 }}>
+                <p style={{ color: '#a3cbff', fontSize: '0.875rem', margin: 0 }}>
+                  <strong>Tip:</strong> Both rule groups are enabled by default for comprehensive profiling. You can disable groups you don't need to speed up processing.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div style={{ marginTop: '2rem', display: 'flex', justifyContent: 'space-between' }}>
+            <button className="btn btn--ghost" onClick={handleBack}>← Back</button>
+            <button 
+              className="btn btn--primary" 
+              onClick={handleStartProfiling}
+              disabled={!datasetLevelRules && !attributeLevelRules}
+            >
+              Start Profiling
+            </button>
           </div>
         </SectionCard>
       )}

@@ -27,6 +27,12 @@ class CSVConfig(BaseModel):
     has_header: bool = Field(default=True, description="Whether first row is header")
 
 
+class Rulesets(BaseModel):
+    """Profiling rulesets configuration"""
+    dataset_level: bool = Field(default=True, description="Enable dataset-level rules")
+    attribute_level: bool = Field(default=True, description="Enable attribute-level rules")
+
+
 class JobCreate(BaseModel):
     """Create profiling job request"""
     name: str = Field(..., description="Job name")
@@ -39,6 +45,7 @@ class JobCreate(BaseModel):
     )
     sample_size: Optional[int] = Field(None, description="Number of rows to profile")
     selected_columns: Optional[List[str]] = Field(None, description="Specific columns to profile (None = all columns)")
+    rulesets: Rulesets = Field(default_factory=Rulesets, description="Profiling rulesets to apply")
 
 
 class Job(BaseModel):

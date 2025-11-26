@@ -1,7 +1,7 @@
 # Data Profiling Utility - Screen Flow & Functionalities
 
 ## Overview
-The Data Profiling Utility consists of 5 main screens designed for CSV file profiling with a simple, intuitive workflow.
+The Data Profiling Utility consists of 5 main screens designed for CSV file profiling with a 4-step configuration wizard.
 
 ---
 
@@ -36,9 +36,15 @@ The Data Profiling Utility consists of 5 main screens designed for CSV file prof
    │       │  • [Add More Files] button
    │       │  └─→ [Back] [Next] buttons
    │       │
-   │       ├─ STEP 3: Profiling Options
+   │       ├─ STEP 3: Column Selection & Sample Size
    │       │  • Profile all columns or select specific
    │       │  • Sample size configuration
+   │       │  └─→ [Back] [Next] buttons
+   │       │
+   │       ├─ STEP 4: Ruleset Selection
+   │       │  • Dataset-Level Rules (group checkbox)
+   │       │  • Attribute-Level Rules (group checkbox)
+   │       │  • Expandable rule details (read-only)
    │       │  └─→ [Back] [Start Profiling] buttons
    │       │
    │       └─→ [Start Profiling] Button
@@ -230,14 +236,14 @@ The Data Profiling Utility consists of 5 main screens designed for CSV file prof
 
 ---
 
-#### **Step 3: Profiling Options**
+#### **Step 3: Column Selection & Sample Size**
 
-**Purpose**: Configure what and how much to profile
+**Purpose**: Select which columns to profile and configure sample size
 
 **Components**:
 - **Column Selection** (Radio buttons)
   - Option 1: "Profile All Columns" (default, selected)
-  - Option 2: "Select Specific Columns" (disabled/grayed out - future feature)
+  - Option 2: "Select Specific Columns" (functional)
   
 - **Sample Size** (for CSV files)
   - Number input field
@@ -247,21 +253,70 @@ The Data Profiling Utility consists of 5 main screens designed for CSV file prof
 
 **Functionality**:
 - **Column Selection**:
-  - Currently only "Profile All Columns" is functional
-  - "Select Specific Columns" is UI placeholder for future
+  - "Profile All Columns": Profile all detected columns (default)
+  - "Select Specific Columns": Show column checkboxes from preview data
+    - Requires preview data from Step 2
+    - Multi-select with Select All/Clear All buttons
+    - Shows column names from file header
 - **Sample Size**:
   - Enter number of rows to limit profiling (e.g., 1000, 10000)
   - If empty/null: Profile all rows in the file(s)
   - Useful for large files to reduce processing time
-- Validation on "Start Profiling":
-  - Job name must be filled (checked in Step 2)
-  - At least 1 file must be uploaded
+- Validation on "Next":
+  - If "Select Specific Columns", at least 1 column must be selected
   - Sample size must be positive integer if provided
 
 **Navigation**:
-- "← Back" → Step 2 (returns to dataset selection)
+- "← Back" → Step 2 (returns to file parsing configuration)
+- "Next →" → Step 4 (ruleset selection)
+
+---
+
+#### **Step 4: Ruleset Selection**
+
+**Purpose**: Choose which profiling rule groups to apply
+
+**Components**:
+- **Ruleset Groups** (Group-level checkboxes)
+  - **Dataset-Level Rules** (checkbox - checked by default)
+    - Expandable panel showing 4 rules (read-only, for information):
+      1. Dataset Statistics (record count, column count, size, timestamps)
+      2. Dataset-Level Data Quality Metrics (completeness, quality score/grade, PII risk)
+      3. Referential Integrity (foreign keys, orphan records, cross-table checks)
+      4. Candidate Key Discovery (single-column keys, composite keys, uniqueness)
+    - Toggle icon to expand/collapse rule details
+    
+  - **Attribute-Level Rules** (checkbox - checked by default)
+    - Expandable panel showing 8 rules (read-only, for information):
+      1. Column Statistics (record count, nulls, unique values)
+      2. Data Type Analysis (inferred types, consistency, patterns)
+      3. Numeric Analysis (min, max, mean, median, std dev, outliers)
+      4. String Analysis (length stats, patterns, character sets)
+      5. Date/Time Analysis (date ranges, formats, invalid dates)
+      6. Column-Level Data Quality (completeness, validity, quality score)
+      7. Value Distribution (frequency, top values, cardinality, mode)
+      8. PII Detection (email, phone, SSN patterns, confidence scores)
+    - Toggle icon to expand/collapse rule details
+
+**Functionality**:
+- **Group-Level Selection**:
+  - Both groups checked by default (all rules enabled)
+  - User can uncheck "Dataset-Level Rules" to disable all 4 dataset rules
+  - User can uncheck "Attribute-Level Rules" to disable all 8 attribute rules
+  - At least one group must remain checked
+- **Rule Details Display**:
+  - Detailed rules shown in expandable panels for transparency
+  - Individual rules are NOT selectable (all-or-nothing per group)
+  - Helps users understand what profiling will be performed
+  - Visual grouping with icons and descriptions
+- **Validation**:
+  - At least one ruleset group must be selected
+  - Warning if both groups unchecked: "Please select at least one ruleset"
+
+**Navigation**:
+- "← Back" → Step 3 (returns to column selection)
 - "Start Profiling" → 
-  - Validates all inputs
+  - Validates ruleset selection
   - Creates job via API call
   - On success: Navigate to `/dashboard/{jobId}`
   - On failure: Show error alert
@@ -271,7 +326,7 @@ The Data Profiling Utility consists of 5 main screens designed for CSV file prof
 - Request payload:
   ```json
   {
-    "name": "Job Name from Step 2",
+    "name": "Job Name from Step 1",
     "description": "Profiling N CSV file(s)",
     "file_paths": ["file_id_1", "file_id_2", ...],
     "csv_config": {
@@ -280,7 +335,12 @@ The Data Profiling Utility consists of 5 main screens designed for CSV file prof
       "has_header": true
     },
     "treat_files_as_dataset": true,
-    "sample_size": null or 1000
+    "sample_size": null or 1000,
+    "selected_columns": ["col1", "col2", ...] or null,
+    "rulesets": {
+      "dataset_level": true,
+      "attribute_level": true
+    }
   }
   ```
 - Response: `{ "job_id": "uuid", "name": "...", "status": "pending", ... }`
@@ -502,7 +562,7 @@ The Data Profiling Utility consists of 5 main screens designed for CSV file prof
 
 ## Key Design Improvements
 
-### **Updated Configuration Flow (3 Steps)**
+### **Updated Configuration Flow (4 Steps)**
 
 **Step 1: Job Configuration & Data Source**
 - ✅ **Job Name is now the FIRST field** - User enters job name before anything else
@@ -520,9 +580,15 @@ The Data Profiling Utility consists of 5 main screens designed for CSV file prof
 - ✅ **Has Header Row** checkbox
 - ✅ **File Preview** - Verify parsing with sample rows
 
-**Step 3: Profiling Options** (unchanged)
-- Column selection
-- Sample size configuration
+**Step 3: Column Selection & Sample Size**
+- ✅ **Column Selection** - Profile all columns or select specific ones
+- ✅ **Sample Size** - Limit rows for faster profiling
+
+**Step 4: Ruleset Selection** (NEW)
+- ✅ **Dataset-Level Rules** - Group checkbox for 4 dataset rules
+- ✅ **Attribute-Level Rules** - Group checkbox for 8 column rules
+- ✅ **Expandable Details** - Show what each rule does (read-only)
+- ✅ **Smart Defaults** - Both groups enabled by default
 
 ### **Benefits of New Flow**
 1. **Better Organization**: Job name upfront establishes context
@@ -530,6 +596,9 @@ The Data Profiling Utility consists of 5 main screens designed for CSV file prof
 3. **Auto-Detection**: Encoding automatically detected, one less thing to configure
 4. **Validation**: File preview helps verify settings before profiling
 5. **Flexibility**: Each file can have different delimiter settings
+6. **Ruleset Control**: Users choose which profiling rules to apply
+7. **Transparency**: Detailed rule descriptions help users understand profiling scope
+8. **Performance**: Disable unnecessary rules to speed up profiling
 
 ---
 
@@ -550,7 +619,11 @@ Step 2: File Parsing Configuration:
         Click [Preview] to verify → looks good ✓
         Configure orders.csv and products.csv similarly → [Next] →
 Step 3: [Profile All Columns] selected (default) →
-        Sample Size: leave empty (profile all rows) → [Start Profiling] →
+        Sample Size: leave empty (profile all rows) → [Next] →
+Step 4: Ruleset Selection:
+        ☑ Dataset-Level Rules (checked) →
+        ☑ Attribute-Level Rules (checked) →
+        Expand groups to review what rules will run → [Start Profiling] →
 Dashboard: 
   • Job created successfully
   • Navigate to Dashboard with job_id
@@ -576,7 +649,8 @@ Step 2: System detects encoding for both files →
         Click [Add More Files] → Upload 1 more file →
         Now 3 files total, configure third file →
         [Next] →
-Step 3: Enter sample size: 5000 (only profile first 5000 rows) → [Start Profiling] →
+Step 3: Enter sample size: 5000 (only profile first 5000 rows) → [Next] →
+Step 4: Keep both rulesets enabled (defaults) → [Start Profiling] →
 Dashboard → View results for sampled data
 ```
 
@@ -605,7 +679,9 @@ Dashboard: View completed job results
 Home → [+ New Profiling Job] →
 Step 1: Upload large_dataset.csv (500MB, 10M rows) → [Next] →
 Step 2: Enter job name: "Large Dataset Sample" → [Next] →
-Step 3: Sample Size: 10000 (profile only 10K rows to save time) → [Start Profiling] →
+Step 3: Sample Size: 10000 (profile only 10K rows to save time) → [Next] →
+Step 4: Uncheck Dataset-Level Rules (only need column analysis) →
+        Keep Attribute-Level Rules checked → [Start Profiling] →
 Dashboard: See results for 10K row sample →
 Detailed Attribute View: Analyze sampled data quality column-by-column
 ```
@@ -614,14 +690,16 @@ Detailed Attribute View: Analyze sampled data quality column-by-column
 
 ### ✅ Fully Implemented
 - All 5 screens with routing and navigation
-- 3-step configuration wizard for CSV files
+- 4-step configuration wizard for CSV files
 - CSV file upload integration with backend (`POST /api/v1/upload`)
 - Job creation API integration (`POST /api/v1/jobs`)
 - Navigation flow between all screens
 - File upload with progress indication
 - Job name validation
 - Delimiter and header configuration
+- Column selection (all or specific)
 - Sample size option
+- Ruleset selection (dataset-level and attribute-level groups)
 - Responsive layout and styling
 
 ### 🔄 Partially Implemented (Uses Mock Data)
