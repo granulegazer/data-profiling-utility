@@ -1,3 +1,3 @@
-"""Data Profiling Utility Backend Application"""
+"""Data Profiling Utility Backend - CSV Files Only"""
 
 __version__ = "1.0.0"

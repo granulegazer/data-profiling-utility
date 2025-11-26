@@ -1,42 +1,8 @@
-# FastAPI and Server
-fastapi==0.109.0
-uvicorn[standard]==0.27.0
-python-multipart==0.0.6
-
-# Database Drivers
-psycopg[binary]==3.1.18
-oracledb==2.0.1
-
-# Data Processing
-pandas==2.2.0
-polars==0.20.6
-numpy==1.26.3
-
-# Async and Background Tasks
-asyncio==3.4.3
-redis==5.0.1
-celery==5.3.6
-
-# Security and Encryption
-cryptography==42.0.0
-python-jose[cryptography]==3.3.0
-passlib[bcrypt]==1.7.4
-
-# Configuration and Environment
-pydantic==2.5.3
-pydantic-settings==2.1.0
-python-dotenv==1.0.0
-
-# Utilities
-aiofiles==23.2.1
-python-dateutil==2.8.2
-
-# Testing
-pytest==7.4.4
-pytest-asyncio==0.23.3
-httpx==0.26.0
-
-# Development
-black==24.1.1
-flake8==7.0.0
-mypy==1.8.0
+fastapi==0.115.5
+uvicorn[standard]==0.32.1
+pydantic==2.10.3
+pydantic-settings==2.6.1
+python-multipart==0.0.20
+python-dotenv==1.0.1
+pandas==2.2.3
+numpy==2.2.0
