@@ -93,10 +93,39 @@ A scalable data profiling tool designed to analyze large datasets from various s
 
 ### 2. Profiling Rules
 
-#### Generic Enterprise Rules
+#### Profiling Rules by Level
+
+##### **Dataset-Level Rules** (Applied to entire dataset/entity)
+1. **Entity Statistics**
+   - Total record count
+   - Total column count
+   - Dataset size (bytes/MB/GB)
+   - Profiling timestamp and duration
+
+2. **Entity-Level Data Quality Metrics**
+   - Overall completeness score (% of non-null values across all columns)
+   - Overall data quality score (0-100)
+   - Data quality grade (Gold/Silver/Bronze)
+   - Entity-level PII risk score
+
+3. **Referential Integrity** (Cross-column analysis)
+   - Foreign key validation
+   - Orphan record detection
+   - Cross-table consistency checks
+
+4. **Candidate Key Discovery** (Entity-wide analysis)
+   - Identify single-column candidate keys (columns with all unique values)
+   - Suggest composite key combinations (multi-column uniqueness)
+   - Calculate uniqueness percentage for potential keys
+   - Detect near-unique columns (high cardinality)
+   - Primary key suggestions based on non-null + unique criteria
+
+##### **Attribute-Level Rules** (Applied to individual columns)
+
 1. **Column Statistics**
-   - Record count
-   - Null count and null percentage
+   - Record count (total rows)
+   - Null count (number of null values)
+   - Null percentage (% of null values)
    - Unique value count
    - Distinct value count
    - Duplicate count
@@ -107,58 +136,48 @@ A scalable data profiling tool designed to analyze large datasets from various s
    - Format pattern detection
    - Data type mismatches
 
-3. **Numeric Analysis**
+3. **Numeric Analysis** (for numeric columns)
    - Min, max, mean, median
    - Standard deviation, variance
    - Quartiles and percentiles
    - Outlier detection
+   - Number range validation
 
-4. **String Analysis**
+4. **String Analysis** (for text columns)
    - Min/max/average length
    - Pattern frequency analysis
    - Character set analysis
    - Leading/trailing spaces detection
+   - Empty string detection
 
-5. **Date/Time Analysis**
+5. **Date/Time Analysis** (for date/timestamp columns)
    - Date range (min/max)
    - Date format patterns
    - Timezone detection
    - Invalid date detection
+   - Future date detection
 
-6. **Data Quality Metrics**
-   - Completeness (% of populated fields)
+6. **Column-Level Data Quality Metrics**
+   - Completeness (% of populated values in this column)
    - Validity (% conforming to expected patterns)
-   - Consistency (cross-column validation)
+   - Consistency (pattern conformance)
    - Accuracy indicators
-   - **Data Quality Grade**: Classification based on overall score
-     - **Gold**: High quality (>= 90% quality score)
-     - **Silver**: Medium quality (70-89% quality score)
-     - **Bronze**: Low quality (< 70% quality score)
+   - Column quality score (0-100)
 
 7. **Value Distribution**
    - Frequency distribution
    - Top N most common values
    - Value histogram generation
    - Cardinality analysis
+   - Mode (most frequent value)
 
-8. **Referential Integrity**
-   - Foreign key validation
-   - Orphan record detection
-   - Cross-table consistency checks
-
-9. **Candidate Key Discovery**
-   - Identify single-column candidate keys (columns with all unique values)
-   - Suggest composite key combinations (multi-column uniqueness)
-   - Calculate uniqueness percentage for potential keys
-   - Detect near-unique columns (high cardinality)
-   - Primary key suggestions based on non-null + unique criteria
-
-10. **PII Detection**
+8. **PII Detection** (per column)
    - Identify personally identifiable information
    - Email, phone number, SSN pattern detection
    - Credit card number detection
    - GDPR compliance checks
    - Sensitive data flagging
+   - PII confidence score
 
 #### Custom Profiling Rules
 1. **Business-Specific Validations**
@@ -192,11 +211,13 @@ A scalable data profiling tool designed to analyze large datasets from various s
   - JSON format stored in filesystem or network storage
   - Hierarchical structure: `{job_id}/{dataset_name}/{entity_name}/`
   - **File Structure**:
-    - `profile_summary.json` - Entity-level summary statistics
-    - `column_statistics.json` - Structured column metrics
-    - `value_distributions.json` - Value distribution data
-    - `pattern_analysis.json` - Pattern detection results
-    - `quality_metrics.json` - Data quality scores and details
+    - `entity_summary.json` - Entity-level summary (dataset-level rules results)
+    - `column_statistics.json` - Attribute-level metrics (all 8 attribute rules per column)
+    - `value_distributions.json` - Value distribution data per column
+    - `pattern_analysis.json` - Pattern detection results per column
+    - `quality_metrics.json` - Quality scores (entity-level and column-level)
+    - `referential_integrity.json` - Cross-table/column relationships
+    - `candidate_keys.json` - Key discovery results
   - Retention policy: configurable (default 90 days)
   - **Note**: Phase 2 will migrate results storage to Oracle database (CLOB/structured tables)
 - **Storage Schema**:
@@ -218,8 +239,10 @@ A scalable data profiling tool designed to analyze large datasets from various s
     - api_endpoint (NULL for DB, API URL for data lake entities)
     - domain_name (NULL for DB, domain value for data lake)
     - xpath_or_attribute_path (NULL for DB, path expression for data lake)
-    - row_count, column_count, null_percentage, data_quality_score
+    - row_count, column_count, total_null_count, overall_null_percentage
+    - overall_completeness_score, data_quality_score
     - data_quality_grade (GOLD/SILVER/BRONZE)
+    - pii_risk_score, candidate_key_count
     - status, started_at, completed_at
     - rows_processed, processing_speed_rows_per_sec
   Profile_Results_File_Path:
@@ -453,16 +476,22 @@ A scalable data profiling tool designed to analyze large datasets from various s
 - Custom query profiling support
 
 #### Complete Generic Enterprise Profiling Rules
-1. **Column Statistics**: Record count, null count/%, unique/distinct/duplicate counts
+
+**Dataset-Level Rules** (4 rules):
+1. **Entity Statistics**: Record count, column count, dataset size, profiling metadata
+2. **Entity-Level Data Quality**: Overall completeness, quality score/grade (Gold/Silver/Bronze), PII risk
+3. **Referential Integrity**: Foreign key validation, orphan records, cross-table checks
+4. **Candidate Key Discovery**: Single-column keys, composite keys, uniqueness %, near-unique columns, PK suggestions
+
+**Attribute-Level Rules** (8 rules per column):
+1. **Column Statistics**: Record count, null count, null percentage, unique/distinct/duplicate counts
 2. **Data Type Analysis**: Inferred types, type consistency, format patterns, mismatches
 3. **Numeric Analysis**: Min, max, mean, median, std dev, variance, quartiles, percentiles, outliers
 4. **String Analysis**: Min/max/avg length, pattern frequency, character sets, whitespace detection
 5. **Date/Time Analysis**: Date range, format patterns, timezone detection, invalid dates
-6. **Data Quality Metrics**: Completeness, validity, consistency, accuracy indicators
-7. **Value Distribution**: Frequency distribution, top N values, histograms, cardinality
-8. **Referential Integrity**: Foreign key validation, orphan records, cross-table checks
-9. **Candidate Key Discovery**: Single-column keys, composite keys, uniqueness %, near-unique columns, PK suggestions
-10. **PII Detection**: Email, phone, SSN, credit card patterns, GDPR compliance, sensitive data flagging
+6. **Column-Level Data Quality**: Completeness, validity, consistency, accuracy, quality score
+7. **Value Distribution**: Frequency distribution, top N values, histograms, cardinality, mode
+8. **PII Detection**: Email, phone, SSN, credit card patterns, GDPR compliance, sensitive data flagging, confidence score
 
 #### Frontend & Visualization
 - React frontend with Vite and TypeScript
