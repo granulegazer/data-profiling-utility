@@ -3,11 +3,15 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException
 from typing import List
 import uuid
+import chardet
+import os
 from datetime import datetime
+from pathlib import Path
 from app.models import (
     JobCreate, Job, JobStatus, JobResult,
     DatasetProfile, ColumnStats
 )
+from app.config import settings
 
 router = APIRouter()
 
@@ -18,16 +22,36 @@ results_db = {}
 
 @router.post("/upload", response_model=dict)
 async def upload_file(file: UploadFile = File(...)):
-    """Upload CSV file"""
+    """Upload CSV file and detect encoding"""
     if not file.filename.endswith('.csv'):
         raise HTTPException(status_code=400, detail="Only CSV files are supported")
     
-    # TODO: Save file to disk
+    # Generate unique file ID
     file_id = str(uuid.uuid4())
+    
+    # Create upload directory if it doesn't exist
+    upload_dir = Path(settings.UPLOAD_DIR)
+    upload_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Save file to disk
+    file_path = upload_dir / f"{file_id}_{file.filename}"
+    
+    # Read file content for encoding detection
+    content = await file.read()
+    
+    # Detect file encoding
+    detected = chardet.detect(content)
+    encoding = detected['encoding'] if detected['encoding'] else 'UTF-8'
+    
+    # Save file
+    with open(file_path, 'wb') as f:
+        f.write(content)
     
     return {
         "file_id": file_id,
         "filename": file.filename,
+        "encoding": encoding,
+        "file_path": str(file_path),
         "message": "File uploaded successfully"
     }
 

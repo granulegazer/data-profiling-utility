@@ -8,9 +8,78 @@ The Data Profiling Utility consists of 5 main screens designed for CSV file prof
 ## Screen Navigation Flow
 
 ```
-Home → Configuration (3 Steps) → Dashboard → Entity View
-  ↓                                    ↓
-History ←──────────────────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│                      Top Navigation Bar                      │
+│  [Data Profiling Utility] | Jobs | History | Settings       │
+└─────────────────────────────────────────────────────────────┘
+
+1. HOME/LANDING PAGE
+   │
+   ├─ Quick stats (total jobs, recent activity)
+   ├─ Recent profiling jobs list
+   ├─ Quick links to recent datasets
+   │
+   ├─→ [+ New Profiling Job] Button
+   │   │
+   │   └─→ 2. CONFIGURATION SCREEN (Multi-step Wizard)
+   │       │
+   │       ├─ STEP 1: Data Source Setup
+   │       │  • Select connection type (Flat File for CSV)
+   │       │  • File upload interface with drag-and-drop
+   │       │  • Multi-file selection
+   │       │  └─→ [Next] button
+   │       │
+   │       ├─ STEP 2: Dataset & Entity Selection
+   │       │  • Job Name input (required)
+   │       │  • Uploaded files list with parsing config
+   │       │    - Delimiter, header row settings per file
+   │       │  • [Add More Files] button
+   │       │  └─→ [Back] [Next] buttons
+   │       │
+   │       ├─ STEP 3: Profiling Options
+   │       │  • Profile all columns or select specific
+   │       │  • Sample size configuration
+   │       │  └─→ [Back] [Start Profiling] buttons
+   │       │
+   │       └─→ [Start Profiling] Button
+   │           │
+   │           └─→ 3. DATASET PROFILE DASHBOARD
+   │               │
+   │               ├─ Dataset-Level Summary Cards
+   │               │  • Total Entities, Avg Quality, Total Rows/Columns
+   │               │  • Overall quality grade badge
+   │               │
+   │               ├─ Data Quality Visualizations
+   │               │  • Quality Grade Distribution Chart
+   │               │  • Entity Quality Scores Chart
+   │               │
+   │               ├─ Entity List/Grid
+   │               │  • Summary cards per entity
+   │               │  • Search, filter, sort capabilities
+   │               │
+   │               └─→ [Click Entity Card/Row]
+   │                   │
+   │                   └─→ 4. DETAILED ENTITY VIEW
+   │                       │
+   │                       ├─ Header with entity info
+   │                       ├─ Navigation Tabs:
+   │                       │  • Overview
+   │                       │  • Column Statistics
+   │                       │  • Data Quality
+   │                       │  • Patterns & Distributions
+   │                       │  • Referential Integrity
+   │                       │  • Candidate Keys
+   │                       │  • PII Detection
+   │                       │
+   │                       └─→ [Back to Dashboard]
+   │
+   └─→ [View Job History] or Top Nav: [History]
+       │
+       └─→ 5. JOB HISTORY SCREEN
+           │
+           ├─ Filter Panel (date, status, source)
+           ├─ Jobs Table/List
+           └─→ [Click Job] → Dashboard (read-only)
 ```
 
 ---
@@ -50,62 +119,109 @@ History ←───────────────────────
 
 **Purpose**: 3-step wizard to set up and start a new CSV profiling job
 
-#### **Step 1: Data Source Setup**
+**Note**: Currently supports **Flat Files (CSV only)**. Database and Data Lake options are placeholders for future implementation.
+
+#### **Step 1: Job Configuration & Data Source**
 
 **Components**:
-- **Connection Type Selector**
-  - Options: Database, Data Lake, Flat File (CSV)
-  - Currently only "Flat File" is functional
-  
+- **Job Name Input** (First field - Required)
+  - Text input field with asterisk (*)
+  - Placeholder: "e.g., Customer Data Profiling"
+  - Must be filled before proceeding
+  - Validation: Cannot be empty
+
+- **Data Source Selection** (Second field)
+  - **Connection Type Dropdown**:
+    - Database (PostgreSQL, Oracle)
+    - Data Lake API
+    - Flat File (CSV, JSON, XML, Excel)
+  - Currently only "Flat File" options are functional
+  - Database and Data Lake shown but disabled for future
+
 - **File Upload Area** (for Flat File)
-  - Drag-and-drop zone (visual only)
-  - "Upload CSV Files" button → Opens file picker
-  - Accepts: `.csv` files only (multiple selection enabled)
-  - Shows upload progress indicator
-  - Displays list of successfully uploaded files with size
+  - Visual drag-and-drop zone with border styling
+  - "Upload CSV Files" button → Opens file picker (hidden input)
+  - Accepts: `.csv` files only
+  - Multiple file selection enabled
+  - Shows "Uploading..." indicator during upload
+  - Displays list of successfully uploaded files with:
+    - File name
+    - File size (KB)
+  - Files can be removed from list (future enhancement)
 
 **Functionality**:
-- Select CSV files from local system
-- Upload files to backend `/api/v1/upload` endpoint
-- Files stored on server, file IDs returned
-- Uploaded files list updated in real-time
+- **Step Order**: User must enter job name FIRST before selecting data source
+- Job name field is validated on blur (cannot be empty)
+- Select data source from dropdown (Database/Data Lake/Flat File)
+- Based on selection, appropriate upload/connection interface appears
+- For Flat File:
+  - User clicks "Upload CSV Files" button
+  - File picker opens (multiple selection)
+  - Selected files uploaded to backend `/api/v1/upload` endpoint
+  - Each file uploaded individually via FormData
+  - Backend returns `file_id` for each uploaded file
+  - Frontend stores file metadata: `{name, size, path: file_id}`
+  - Uploaded files list updated in real-time
+  - Upload button disabled during upload process
+  - Alert shown on success/failure
 
 **Navigation**:
 - "Cancel" → Navigate to Home `/`
-- "Next →" → Step 2 (only if files uploaded)
+- "Next →" → Step 2 (enabled only if job name filled AND at least 1 file uploaded)
 
 ---
 
-#### **Step 2: Dataset & Entity Selection**
+#### **Step 2: File Parsing Configuration**
 
-**Purpose**: Configure job details and CSV parsing options
+**Purpose**: Configure how uploaded files should be parsed
+
+**Automatic Processing**:
+- **File Encoding Detection**: Automatically detect and display file encoding (UTF-8, ISO-8859-1, etc.)
+- **File Preview**: Show first 5-10 rows of the file to help user verify settings
 
 **Components**:
-- **Job Name** (Required)
-  - Text input for job identification
-  - Placeholder: "e.g., Customer Data Profiling"
-  
-- **Uploaded Files List**
-  - Shows all uploaded CSV files
-  - For each file:
-    - File name and size
-    - **Delimiter** input (default: `,`)
-    - **Has header row** checkbox (default: checked)
-  
-- **Add More Files** button
-  - Opens file picker to upload additional CSV files
+- **Uploaded Files Section**
+  - If files uploaded (from Step 1):
+    - Heading: "Configure File Parsing (N files)"
+    - For each file, display card with:
+      - **File name** (bold) and size (KB)
+      - **Detected Encoding**: Display auto-detected encoding (e.g., "UTF-8")
+        - Option to manually override if needed
+      - **Column Delimiter**: Dropdown with common options
+        - Options: 
+          - `,` (Comma)
+          - `\t` (Tab)
+          - `;` (Semicolon)
+          - `|` (Pipe)
+          - Custom (text input for other delimiters)
+        - Default: Auto-detected or `,` (comma)
+      - **Has Header Row** checkbox
+        - Default: checked (yes)
+        - Label: "First row contains column names"
+      - **Preview** button: Show first few rows with detected/selected delimiter
+    - **Add More Files** button → Upload additional files
+  - If no files uploaded:
+    - Message: "No files uploaded yet. Go back to Step 1 to upload files."
 
 **Functionality**:
-- Enter descriptive job name
-- Configure CSV parsing per file:
-  - Set delimiter (comma, tab, semicolon, etc.)
-  - Specify if first row contains headers
-- Add more files if needed
-- Validation: Job name must not be empty
+- System automatically detects file encoding for each uploaded file
+- User selects delimiter from common options dropdown (easier than typing)
+- Option for custom delimiter if not in the list
+- Toggle whether first row is header
+- Preview data with selected settings to verify correctness
+- **Add More Files**: Upload additional CSV files → Added to list with own parsing config
+- Each file can have different delimiter and header settings
+- Validation on "Next": At least one file must be configured
+
+**Current Implementation**:
+- Delimiter dropdown with common options (to be implemented)
+- Encoding auto-detection (to be implemented)
+- Preview functionality (to be implemented)
+- Currently: Manual text input for delimiter, single global setting
 
 **Navigation**:
-- "← Back" → Step 1
-- "Next →" → Step 3 (requires job name)
+- "← Back" → Step 1 (returns to file upload screen)
+- "Next →" → Step 3 (enabled only if job name is filled)
 
 ---
 
@@ -114,40 +230,57 @@ History ←───────────────────────
 **Purpose**: Configure what and how much to profile
 
 **Components**:
-- **Column Selection**
-  - Radio button: "Profile All Columns" (default)
-  - Radio button: "Select Specific Columns" (future)
+- **Column Selection** (Radio buttons)
+  - Option 1: "Profile All Columns" (default, selected)
+  - Option 2: "Select Specific Columns" (disabled/grayed out - future feature)
   
 - **Sample Size** (for CSV files)
-  - Number input
+  - Number input field
+  - Label: "Sample Size (rows)"
   - Placeholder: "Leave empty to profile entire file"
-  - Optional: If empty, profiles all rows
+  - Optional: If left empty, profiles all rows in file(s)
 
 **Functionality**:
-- Choose to profile all columns or select specific ones
-- Set sample size to limit rows profiled (for large files)
-- Validation happens on "Start Profiling"
+- **Column Selection**:
+  - Currently only "Profile All Columns" is functional
+  - "Select Specific Columns" is UI placeholder for future
+- **Sample Size**:
+  - Enter number of rows to limit profiling (e.g., 1000, 10000)
+  - If empty/null: Profile all rows in the file(s)
+  - Useful for large files to reduce processing time
+- Validation on "Start Profiling":
+  - Job name must be filled (checked in Step 2)
+  - At least 1 file must be uploaded
+  - Sample size must be positive integer if provided
 
 **Navigation**:
-- "← Back" → Step 2
-- "Start Profiling" → Creates job via API → Navigate to `/dashboard/{jobId}`
+- "← Back" → Step 2 (returns to dataset selection)
+- "Start Profiling" → 
+  - Validates all inputs
+  - Creates job via API call
+  - On success: Navigate to `/dashboard/{jobId}`
+  - On failure: Show error alert
 
 **API Integration**:
-- Calls `POST /api/v1/jobs` with:
+- Button click triggers API call: `POST /api/v1/jobs`
+- Request payload:
   ```json
   {
-    "name": "Job Name",
+    "name": "Job Name from Step 2",
     "description": "Profiling N CSV file(s)",
-    "file_paths": ["file_id_1", "file_id_2"],
+    "file_paths": ["file_id_1", "file_id_2", ...],
     "csv_config": {
       "delimiter": ",",
       "encoding": "utf-8",
       "has_header": true
     },
     "treat_files_as_dataset": true,
-    "sample_size": null
+    "sample_size": null or 1000
   }
   ```
+- Response: `{ "job_id": "uuid", "name": "...", "status": "pending", ... }`
+- On success: Navigate to `/dashboard/{job_id}`
+- On error: Display error message from API
 
 ---
 
@@ -201,55 +334,106 @@ History ←───────────────────────
 
 - **7 Tabs with Detailed Information**:
 
-#### Tab 1: **Overview**
-- Dataset summary statistics
-- File size, row count, column count
-- Profiling timestamp
-- Overall quality score
+#### Tab 1: **Overview** (Dataset-Level Rules Summary)
+- **Dataset Statistics**:
+  - Total record count
+  - Total column count
+  - Dataset size (bytes/MB/GB)
+  - Profiling timestamp and duration
+- **Dataset-Level Data Quality Metrics**:
+  - Overall completeness score (% non-null across all columns)
+  - Overall data quality score (0-100)
+  - Data quality grade badge (Gold/Silver/Bronze/Red)
+  - PII risk score
+- **Summary Visualizations**:
+  - Quality score gauge
+  - Completeness percentage bar
+  - Grade indicator with color coding
 
-#### Tab 2: **Column Statistics**
-- Table with all columns
-- For each column:
-  - Column name
-  - Data type
-  - Null count & percentage
-  - Unique count & percentage
-  - Min/Max values
-  - Mean, Median, Std Dev (for numeric)
-  - Top N most frequent values
+#### Tab 2: **Column Statistics** (Attribute-Level Rules - All 8)
+- **Table View** with expandable rows
+- **For Each Column**:
+  1. **Column Statistics**: Record count, null count, null %, unique count, distinct count, duplicate count
+  2. **Data Type Analysis**: Inferred type, type consistency, format patterns, type mismatches
+  3. **Numeric Analysis** (if numeric): Min, max, mean, median, std dev, variance, Q1, Q3, percentiles, outliers
+  4. **String Analysis** (if text): Min/max/avg length, pattern frequency, character sets, leading/trailing spaces
+  5. **Date/Time Analysis** (if date): Min/max date, range span, format patterns, timezone, invalid dates
+  6. **Column-Level Data Quality**: Completeness %, validity %, consistency, conformity rate, quality score, quality grade
+  7. **Value Distribution**: Frequency distribution, top N values, bottom N values, histogram bins, cardinality, mode
+  8. **PII Detection**: Email, phone, SSN, credit card patterns, confidence score, risk level
 
-#### Tab 3: **Data Quality**
-- Quality rules execution results
-- Dataset-level rules (4 rules):
-  - Row count validation
-  - Duplicate row detection
-  - Column count validation
-  - File size checks
-- Column-level issues summary
+#### Tab 3: **Data Quality** (Detailed Quality Breakdown)
+- **Dataset-Level Quality Rules Results**:
+  - Rule 1: Dataset Statistics (pass/fail)
+  - Rule 2: Data Quality Metrics (scores and grades)
+  - Rule 3: Referential Integrity (validation results)
+  - Rule 4: Candidate Key Discovery (keys found)
+- **Column-Level Quality Summary**:
+  - List of columns with quality issues
+  - Quality score distribution across columns
+  - Top issues by severity
+  - Quality trends (if multiple runs)
+- **Visualizations**:
+  - Quality score distribution histogram
+  - Issue severity breakdown
+  - Column quality heatmap
 
-#### Tab 4: **Patterns & Formats**
-- Data pattern detection
-- Format validation (emails, phones, dates, etc.)
-- Regular expression matches
-- Pattern frequency distribution
+#### Tab 4: **Patterns & Distributions** (Value Analysis)
+- **Per Column**:
+  - Value distribution charts (histograms, bar charts)
+  - Frequency tables (top N most/least common values)
+  - Pattern frequency analysis
+  - Format pattern detection (emails, phones, dates, etc.)
+  - Character set distribution
+  - Cardinality metrics
+- **Visualizations**:
+  - Interactive histograms
+  - Frequency bar charts
+  - Pattern pie charts
 
-#### Tab 5: **Data Integrity**
-- Referential integrity checks (future)
-- Cross-column validations
-- Business rule violations
-- Consistency checks
+#### Tab 5: **Referential Integrity** (Cross-Column Analysis - Dataset-Level Rule 3)
+- **Foreign Key Validation**:
+  - Detected relationships between columns/tables
+  - Orphan record detection
+  - Missing reference validation
+- **Cross-Table Consistency Checks**:
+  - Value consistency across related columns
+  - Referential integrity violations
+- **Visualizations**:
+  - Relationship diagrams
+  - Violation count tables
+  - Orphan record charts
 
-#### Tab 6: **Keys & Uniqueness**
-- Primary key candidates
-- Unique key detection
-- Duplicate value analysis
-- Cardinality metrics
+#### Tab 6: **Candidate Keys** (Key Discovery - Dataset-Level Rule 4)
+- **Single-Column Candidates**:
+  - Columns with all unique values
+  - Uniqueness percentage (100% or near-100%)
+- **Composite Key Suggestions**:
+  - Multi-column uniqueness combinations
+  - Cardinality analysis
+- **Primary Key Recommendations**:
+  - Based on non-null + unique criteria
+  - Key quality scores
+- **Visualizations**:
+  - Uniqueness distribution
+  - Key candidate ranking
+  - Composite key relationship diagrams
 
-#### Tab 7: **PII Detection**
-- Personal Identifiable Information detection
-- Sensitive data patterns
-- Column-level PII classification
-- Compliance indicators (GDPR, CCPA)
+#### Tab 7: **PII Detection** (Sensitive Data - Attribute-Level Rule 8)
+- **Per Column PII Results**:
+  - PII patterns detected (email, phone, SSN, credit card, IP, address, names, DOB)
+  - GDPR sensitive data categories
+  - PII confidence score (0-100)
+  - PII risk level (Low/Medium/High)
+  - Sensitive data flags
+- **Entity-Level PII Summary**:
+  - Total PII columns detected
+  - Overall PII risk score
+  - Compliance indicators (GDPR, CCPA)
+- **Visualizations**:
+  - PII risk heatmap by column
+  - Pattern detection confidence chart
+  - Risk level distribution
 
 **Functionality**:
 - Deep dive into dataset quality
@@ -308,28 +492,171 @@ History ←───────────────────────
 
 ---
 
+## Key Design Improvements
+
+### **Updated Configuration Flow (3 Steps)**
+
+**Step 1: Job Configuration & Data Source**
+- ✅ **Job Name is now the FIRST field** - User enters job name before anything else
+- ✅ **Data Source Dropdown** - Single dropdown to select: Database, Data Lake API, or Flat File
+- ✅ File upload after source selection
+
+**Step 2: File Parsing Configuration** 
+- ✅ **Automatic Encoding Detection** - System detects file encoding (UTF-8, ISO-8859-1, etc.)
+- ✅ **Delimiter Dropdown** - Easy selection from common delimiters:
+  - `,` (Comma)
+  - `\t` (Tab)
+  - `;` (Semicolon)
+  - `|` (Pipe)
+  - Custom (manual input)
+- ✅ **Has Header Row** checkbox
+- ✅ **File Preview** - Verify parsing with sample rows
+
+**Step 3: Profiling Options** (unchanged)
+- Column selection
+- Sample size configuration
+
+### **Benefits of New Flow**
+1. **Better Organization**: Job name upfront establishes context
+2. **Easier Delimiter Selection**: Dropdown vs manual typing reduces errors
+3. **Auto-Detection**: Encoding automatically detected, one less thing to configure
+4. **Validation**: File preview helps verify settings before profiling
+5. **Flexibility**: Each file can have different delimiter settings
+
+---
+
+## User Journey Examples
+
+### **Journey 1: First-Time User - Profile CSV Files**
+```
+Home → [+ New Profiling Job] → 
+Step 1: Enter job name: "Q4 Sales Data Analysis" (FIRST) →
+        Select Data Source: [Flat File] from dropdown →
+        Click [Upload CSV Files] → 
+        Select 3 files: customers.csv, orders.csv, products.csv →
+        Files upload successfully (see file list with sizes) → [Next] →
+Step 2: File Parsing Configuration:
+        System detects encoding: "UTF-8" for all files ✓
+        For customers.csv: Select delimiter from dropdown: "," (Comma) →
+        Has header: ✓ (checked) →
+        Click [Preview] to verify → looks good ✓
+        Configure orders.csv and products.csv similarly → [Next] →
+Step 3: [Profile All Columns] selected (default) →
+        Sample Size: leave empty (profile all rows) → [Start Profiling] →
+Dashboard: 
+  • Job created successfully
+  • Navigate to Dashboard with job_id
+  • See Dataset Summary: 3 entities, scores, row/column totals
+  • View Quality Distribution Chart
+  • Browse Entity List
+  • Click "customers.csv" entity card →
+Entity View: 
+  • Tab through Overview, Column Statistics, Data Quality, etc.
+  • Review column-level metrics
+  • [Back to Dashboard] → Review other entities
+```
+
+### **Journey 2: Returning User - Add More Files**
+```
+Home → [+ New Profiling Job] →
+Step 1: Enter job name: "Customer Analysis" →
+        Select [Flat File] → Upload 2 CSV files → [Next] →
+Step 2: System detects encoding for both files →
+        Configure file1.csv: Delimiter dropdown = "," (Comma), Header = ✓ →
+        Configure file2.csv: Delimiter dropdown = ";" (Semicolon), Header = ✓ →
+        Click [Add More Files] → Upload 1 more file →
+        Now 3 files total, configure third file →
+        [Next] →
+Step 3: Enter sample size: 5000 (only profile first 5000 rows) → [Start Profiling] →
+Dashboard → View results for sampled data
+```
+
+### **Journey 3: Review Job History**
+```
+Home → Recent Jobs: Click "Q4 Sales Data Analysis (Nov 26)" →
+Dashboard (read-only) → Browse entities →
+Click "orders.csv" → Entity View → Review Column Statistics tab →
+[Back to Dashboard] → [Export Report]
+```
+
+### **Journey 4: Explore Historical Jobs**
+```
+Home → Top Nav: [History] →
+History Screen:
+  • See list of all profiling jobs
+  • Filter by date range
+  • Sort by completion time
+  • Click [View] on "Customer Analysis - Nov 20" →
+Dashboard: View completed job results
+```
+
+### **Journey 5: Large File with Sampling**
+```
+Home → [+ New Profiling Job] →
+Step 1: Upload large_dataset.csv (500MB, 10M rows) → [Next] →
+Step 2: Enter job name: "Large Dataset Sample" → [Next] →
+Step 3: Sample Size: 10000 (profile only 10K rows to save time) → [Start Profiling] →
+Dashboard: See results for 10K row sample →
+Entity View: Analyze sampled data quality
+```
+
 ## Current Implementation Status
 
 ### ✅ Fully Implemented
-- All 5 screens with routing
-- 3-step configuration wizard
-- CSV file upload integration with backend
-- Job creation API integration
+- All 5 screens with routing and navigation
+- 3-step configuration wizard for CSV files
+- CSV file upload integration with backend (`POST /api/v1/upload`)
+- Job creation API integration (`POST /api/v1/jobs`)
 - Navigation flow between all screens
+- File upload with progress indication
+- Job name validation
+- Delimiter and header configuration
+- Sample size option
+- Responsive layout and styling
 
-### 🔄 Partially Implemented
-- Dashboard and Entity View use mock data
-- Backend API endpoints exist but need profiling logic
-- Quality calculations pending
+### 🔄 Partially Implemented (Uses Mock Data)
+- Dashboard visualizations (charts show static data)
+- Entity summary cards (mock quality scores)
+- Entity View tabs (mock column statistics)
+- Quality grade calculations (Gold/Silver/Bronze badges are hardcoded)
+- Backend API endpoints exist but profiling logic not implemented
+- Job progress tracking UI ready but not connected to real-time updates
 
-### 📋 Future Enhancements
-- Database and Data Lake connections
-- Real-time job progress tracking
-- Advanced filtering and search
-- Result export functionality
-- PII detection algorithms
-- Pattern recognition engine
-- Custom quality rules configuration
+### 📋 Future Enhancements (Not Yet Started)
+- **Data Sources**:
+  - Database connections (Oracle, PostgreSQL)
+  - Data Lake API profiling
+  - Additional file formats (JSON, XML, Excel)
+- **Profiling Engine**:
+  - Actual dataset-level rules implementation (4 rules)
+  - Actual attribute-level rules implementation (8 rules per column)
+  - Real quality score calculations
+  - PII detection algorithms
+  - Pattern recognition engine
+  - Candidate key discovery
+  - Referential integrity checks
+- **UI Features**:
+  - Real-time job progress tracking with WebSockets
+  - Advanced filtering and search in entity list
+  - Result export functionality (JSON/CSV/PDF)
+  - Historical comparison between profiling runs
+  - Column-specific profiling (select specific columns)
+  - Custom quality rules configuration
+  - Interactive chart drill-downs
+  - Data lineage visualization
+- **Backend Features**:
+  - Oracle database integration for metadata storage
+  - Migrate results from filesystem to Oracle
+  - Job queue and background processing
+  - Concurrent job execution
+  - Job resumption after failures
+  - Result retention and archival
+- **Security & Management**:
+  - User authentication and authorization
+  - Role-based access control (RBAC)
+  - Encrypted credential storage
+  - Audit logging
+  - API rate limiting
 
 ---
 

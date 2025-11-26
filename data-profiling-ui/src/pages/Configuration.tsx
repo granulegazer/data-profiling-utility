@@ -6,20 +6,39 @@ import { api } from '../api/client';
 type SourceType = 'database' | 'data_lake' | 'flat_file';
 type Mode = 'browse_tables' | 'custom_query' | 'flat_file';
 
+interface UploadedFile {
+  name: string;
+  size: number;
+  path: string;
+  encoding?: string;
+}
+
 function Configuration() {
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [step, setStep] = useState(1);
+  const [jobName, setJobName] = useState('');
   const [sourceType, setSourceType] = useState<SourceType>('flat_file');
   const [mode, setMode] = useState<Mode>('browse_tables');
-  const [uploadedFiles, setUploadedFiles] = useState<Array<{name: string, size: number, path: string}>>([]);
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [isUploading, setIsUploading] = useState(false);
-  const [jobName, setJobName] = useState('');
   const [delimiter, setDelimiter] = useState(',');
   const [hasHeader, setHasHeader] = useState(true);
   const [sampleSize, setSampleSize] = useState<string>('');
 
   const handleNext = () => {
+    // Step 1 validation: Job name and at least 1 file
+    if (step === 1) {
+      if (!jobName.trim()) {
+        alert('Please enter a job name');
+        return;
+      }
+      if (uploadedFiles.length === 0) {
+        alert('Please upload at least one CSV file');
+        return;
+      }
+    }
+    
     if (step < 3) {
       setStep(step + 1);
     }
@@ -53,7 +72,8 @@ function Configuration() {
         uploadedFileData.push({
           name: file.name,
           size: file.size,
-          path: response.data.file_id
+          path: response.data.file_id,
+          encoding: response.data.encoding || 'UTF-8'
         });
       }
 
@@ -109,21 +129,32 @@ function Configuration() {
         <div>
           <h1>Configure Profiling Job</h1>
           <p className="lede">
-            Step {step} of 3: {step === 1 ? 'Data Source Setup' : step === 2 ? 'Dataset & Entity Selection' : 'Profiling Options'}
+            Step {step} of 3: {step === 1 ? 'Job Configuration & Data Source' : step === 2 ? 'File Parsing Configuration' : 'Profiling Options'}
           </p>
         </div>
       </section>
 
-      {/* Step 1: Data Source Setup */}
+      {/* Step 1: Job Configuration & Data Source */}
       {step === 1 && (
-        <SectionCard title="Step 1: Data Source Setup" subtitle="Select your data source type and connection">
+        <SectionCard title="Step 1: Job Configuration & Data Source" subtitle="Enter job name and select your data source">
           <div className="form-grid">
             <label>
-              Connection Type
+              Job Name *
+              <input 
+                type="text"
+                placeholder="e.g., Customer Data Profiling"
+                value={jobName}
+                onChange={(e) => setJobName(e.target.value)}
+                required
+              />
+            </label>
+
+            <label>
+              Data Source
               <select value={sourceType} onChange={(e) => setSourceType(e.target.value as SourceType)}>
-                <option value="database">Database (PostgreSQL/Oracle)</option>
-                <option value="data_lake">Data Lake API</option>
-                <option value="flat_file">Flat File (CSV/JSON/XML/Excel)</option>
+                <option value="flat_file">Flat File (CSV)</option>
+                <option value="database" disabled>Database (PostgreSQL/Oracle) - Coming Soon</option>
+                <option value="data_lake" disabled>Data Lake API - Coming Soon</option>
               </select>
             </label>
 
@@ -188,9 +219,9 @@ function Configuration() {
         </SectionCard>
       )}
 
-      {/* Step 2: Dataset & Entity Selection */}
+      {/* Step 2: File Parsing Configuration */}
       {step === 2 && (
-        <SectionCard title="Step 2: Dataset & Entity Selection" subtitle="Choose tables, write custom queries, or configure files">
+        <SectionCard title="Step 2: File Parsing Configuration" subtitle="Configure how uploaded files should be parsed">
           {sourceType === 'database' && (
             <>
               <div className="form-grid">
@@ -259,33 +290,44 @@ function Configuration() {
 
           {sourceType === 'flat_file' && (
             <div>
-              <div className="form-grid">
-                <label>
-                  Job Name *
-                  <input 
-                    type="text"
-                    placeholder="e.g., Customer Data Profiling"
-                    value={jobName}
-                    onChange={(e) => setJobName(e.target.value)}
-                    required
-                  />
-                </label>
-              </div>
-
               {uploadedFiles.length > 0 ? (
                 <div style={{ marginTop: '1rem' }}>
-                  <p><strong>Uploaded Files ({uploadedFiles.length}):</strong></p>
+                  <p><strong>Configure File Parsing ({uploadedFiles.length} file{uploadedFiles.length > 1 ? 's' : ''}):</strong></p>
                   {uploadedFiles.map((file, idx) => (
-                    <div key={idx} style={{ padding: '1rem', border: '1px solid #ddd', borderRadius: '4px', marginTop: '0.5rem' }}>
-                      <strong>{file.name}</strong> - {(file.size / 1024).toFixed(2)} KB
-                      <div style={{ marginTop: '0.5rem' }}>
+                    <div key={idx} style={{ padding: '1rem', border: '1px solid #ddd', borderRadius: '4px', marginTop: '0.5rem', backgroundColor: '#f9f9f9' }}>
+                      <div style={{ marginBottom: '0.5rem' }}>
+                        <strong>{file.name}</strong> - {(file.size / 1024).toFixed(2)} KB
+                      </div>
+                      
+                      <div style={{ marginBottom: '0.5rem', fontSize: '0.9rem', color: '#666' }}>
+                        <strong>Detected Encoding:</strong> {file.encoding || 'UTF-8'}
+                      </div>
+                      
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                         <label>
-                          Delimiter: <input type="text" value={delimiter} onChange={(e) => setDelimiter(e.target.value)} style={{ width: '50px' }} />
+                          Column Delimiter
+                          <select value={delimiter} onChange={(e) => setDelimiter(e.target.value)}>
+                            <option value=",">Comma (,)</option>
+                            <option value="\t">Tab (\t)</option>
+                            <option value=";">Semicolon (;)</option>
+                            <option value="|">Pipe (|)</option>
+                            <option value="custom">Custom...</option>
+                          </select>
                         </label>
-                        <label style={{ marginLeft: '1rem' }}>
-                          <input type="checkbox" checked={hasHeader} onChange={(e) => setHasHeader(e.target.checked)} /> Has header row
+                        
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '1.5rem' }}>
+                          <input 
+                            type="checkbox" 
+                            checked={hasHeader} 
+                            onChange={(e) => setHasHeader(e.target.checked)} 
+                          />
+                          First row contains column names
                         </label>
                       </div>
+                      
+                      <button className="btn btn--ghost" style={{ marginTop: '0.5rem', fontSize: '0.875rem' }}>
+                        Preview Data
+                      </button>
                     </div>
                   ))}
                   <button className="btn btn--ghost" style={{ marginTop: '1rem' }} onClick={() => fileInputRef.current?.click()}>+ Add More Files</button>
