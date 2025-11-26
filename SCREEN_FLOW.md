@@ -274,44 +274,48 @@ The Data Profiling Utility consists of 5 main screens designed for CSV file prof
 
 #### **Step 4: Ruleset Selection**
 
-**Purpose**: Choose which profiling rule groups to apply
+**Purpose**: Choose which specific profiling rules to apply
 
 **Components**:
-- **Ruleset Groups** (Group-level checkboxes)
-  - **Dataset-Level Rules** (checkbox - checked by default)
-    - Expandable panel showing 4 rules (read-only, for information):
-      1. Dataset Statistics (record count, column count, size, timestamps)
-      2. Dataset-Level Data Quality Metrics (completeness, quality score/grade, PII risk)
-      3. Referential Integrity (foreign keys, orphan records, cross-table checks)
-      4. Candidate Key Discovery (single-column keys, composite keys, uniqueness)
-    - Toggle icon to expand/collapse rule details
+- **Rule Groups** (Expandable sections, non-interactive headers)
+  - **Dataset-Level Rules** (expandable group header)
+    - Expandable panel showing 4 individual rule checkboxes:
+      1. ☑ Dataset Statistics (record count, column count, size, timestamps)
+      2. ☑ Dataset-Level Data Quality Metrics (completeness, quality score/grade, PII risk)
+      3. ☑ Referential Integrity (foreign keys, orphan records, cross-table checks)
+      4. ☑ Candidate Key Discovery (single-column keys, composite keys, uniqueness)
+    - Each rule has checkbox, icon, name, and description
+    - Toggle icon to expand/collapse rule list
     
-  - **Attribute-Level Rules** (checkbox - checked by default)
-    - Expandable panel showing 8 rules (read-only, for information):
-      1. Column Statistics (record count, nulls, unique values)
-      2. Data Type Analysis (inferred types, consistency, patterns)
-      3. Numeric Analysis (min, max, mean, median, std dev, outliers)
-      4. String Analysis (length stats, patterns, character sets)
-      5. Date/Time Analysis (date ranges, formats, invalid dates)
-      6. Column-Level Data Quality (completeness, validity, quality score)
-      7. Value Distribution (frequency, top values, cardinality, mode)
-      8. PII Detection (email, phone, SSN patterns, confidence scores)
-    - Toggle icon to expand/collapse rule details
+  - **Attribute-Level Rules** (expandable group header)
+    - Expandable panel showing 8 individual rule checkboxes:
+      1. ☑ Column Statistics (record count, nulls, unique values)
+      2. ☑ Data Type Analysis (inferred types, consistency, patterns)
+      3. ☑ Numeric Analysis (min, max, mean, median, std dev, outliers)
+      4. ☑ String Analysis (length stats, patterns, character sets)
+      5. ☑ Date/Time Analysis (date ranges, formats, invalid dates)
+      6. ☑ Column-Level Data Quality (completeness, validity, quality score)
+      7. ☑ Value Distribution (frequency, top values, cardinality, mode)
+      8. ☑ PII Detection (email, phone, SSN patterns, confidence scores)
+    - Each rule has checkbox, icon, name, and description
+    - Toggle icon to expand/collapse rule list
 
 **Functionality**:
-- **Group-Level Selection**:
-  - Both groups checked by default (all rules enabled)
-  - User can uncheck "Dataset-Level Rules" to disable all 4 dataset rules
-  - User can uncheck "Attribute-Level Rules" to disable all 8 attribute rules
-  - At least one group must remain checked
-- **Rule Details Display**:
-  - Detailed rules shown in expandable panels for transparency
-  - Individual rules are NOT selectable (all-or-nothing per group)
-  - Helps users understand what profiling will be performed
-  - Visual grouping with icons and descriptions
+- **Individual Rule Selection**:
+  - All 12 rules checked by default (comprehensive profiling)
+  - User can select/deselect any individual rule
+  - Selected rules have highlighted blue background
+  - Deselected rules have neutral gray background
+  - At least one rule (from either group) must be selected
+- **Visual Design**:
+  - Each rule is a clickable label with checkbox
+  - Icons and descriptions help users understand each rule
+  - Smooth transitions and hover effects
+  - Group headers show rule count badge (4 rules / 8 rules)
 - **Validation**:
-  - At least one ruleset group must be selected
-  - Warning if both groups unchecked: "Please select at least one ruleset"
+  - At least one rule must be selected to proceed
+  - Warning if no rules selected: "Please select at least one profiling rule to continue"
+  - "Start Profiling" button disabled when no rules selected
 
 **Navigation**:
 - "← Back" → Step 3 (returns to column selection)
@@ -338,8 +342,22 @@ The Data Profiling Utility consists of 5 main screens designed for CSV file prof
     "sample_size": null or 1000,
     "selected_columns": ["col1", "col2", ...] or null,
     "rulesets": {
-      "dataset_level": true,
-      "attribute_level": true
+      "dataset_level": {
+        "dataset_statistics": true,
+        "dataset_quality": true,
+        "referential_integrity": false,
+        "candidate_keys": true
+      },
+      "attribute_level": {
+        "column_statistics": true,
+        "data_type_analysis": true,
+        "numeric_analysis": true,
+        "string_analysis": false,
+        "date_time_analysis": true,
+        "column_quality": true,
+        "value_distribution": true,
+        "pii_detection": false
+      }
     }
   }
   ```
@@ -585,10 +603,12 @@ The Data Profiling Utility consists of 5 main screens designed for CSV file prof
 - ✅ **Sample Size** - Limit rows for faster profiling
 
 **Step 4: Ruleset Selection** (NEW)
-- ✅ **Dataset-Level Rules** - Group checkbox for 4 dataset rules
-- ✅ **Attribute-Level Rules** - Group checkbox for 8 column rules
-- ✅ **Expandable Details** - Show what each rule does (read-only)
-- ✅ **Smart Defaults** - Both groups enabled by default
+- ✅ **Individual Rule Selection** - 12 separate checkboxes for granular control
+- ✅ **Dataset-Level Rules** - 4 individual rule checkboxes with descriptions
+- ✅ **Attribute-Level Rules** - 8 individual rule checkboxes with descriptions
+- ✅ **Expandable Groups** - Collapsible sections to organize rules visually
+- ✅ **Smart Defaults** - All rules enabled by default for comprehensive profiling
+- ✅ **Visual Feedback** - Selected rules highlighted, icons, and descriptions
 
 ### **Benefits of New Flow**
 1. **Better Organization**: Job name upfront establishes context
@@ -596,9 +616,10 @@ The Data Profiling Utility consists of 5 main screens designed for CSV file prof
 3. **Auto-Detection**: Encoding automatically detected, one less thing to configure
 4. **Validation**: File preview helps verify settings before profiling
 5. **Flexibility**: Each file can have different delimiter settings
-6. **Ruleset Control**: Users choose which profiling rules to apply
-7. **Transparency**: Detailed rule descriptions help users understand profiling scope
-8. **Performance**: Disable unnecessary rules to speed up profiling
+6. **Granular Ruleset Control**: Select individual rules for precise profiling customization
+7. **Transparency**: Each rule shows clear description of what it analyzes
+8. **Performance**: Disable specific unnecessary rules to speed up profiling
+9. **Flexibility**: Mix and match rules from both dataset and attribute levels
 
 ---
 
@@ -680,8 +701,9 @@ Home → [+ New Profiling Job] →
 Step 1: Upload large_dataset.csv (500MB, 10M rows) → [Next] →
 Step 2: Enter job name: "Large Dataset Sample" → [Next] →
 Step 3: Sample Size: 10000 (profile only 10K rows to save time) → [Next] →
-Step 4: Uncheck Dataset-Level Rules (only need column analysis) →
-        Keep Attribute-Level Rules checked → [Start Profiling] →
+Step 4: Uncheck all Dataset-Level Rules (only need column analysis) →
+        Keep all Attribute-Level Rules checked →
+        Or selectively uncheck rules like PII Detection if not needed → [Start Profiling] →
 Dashboard: See results for 10K row sample →
 Detailed Attribute View: Analyze sampled data quality column-by-column
 ```

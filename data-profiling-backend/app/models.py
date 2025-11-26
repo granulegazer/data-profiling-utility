@@ -27,10 +27,30 @@ class CSVConfig(BaseModel):
     has_header: bool = Field(default=True, description="Whether first row is header")
 
 
+class DatasetLevelRules(BaseModel):
+    """Dataset-level profiling rules"""
+    dataset_statistics: bool = Field(default=True, description="Dataset statistics rule")
+    dataset_quality: bool = Field(default=True, description="Dataset-level data quality rule")
+    referential_integrity: bool = Field(default=True, description="Referential integrity rule")
+    candidate_keys: bool = Field(default=True, description="Candidate key discovery rule")
+
+
+class AttributeLevelRules(BaseModel):
+    """Attribute-level profiling rules"""
+    column_statistics: bool = Field(default=True, description="Column statistics rule")
+    data_type_analysis: bool = Field(default=True, description="Data type analysis rule")
+    numeric_analysis: bool = Field(default=True, description="Numeric analysis rule")
+    string_analysis: bool = Field(default=True, description="String analysis rule")
+    date_time_analysis: bool = Field(default=True, description="Date/time analysis rule")
+    column_quality: bool = Field(default=True, description="Column-level data quality rule")
+    value_distribution: bool = Field(default=True, description="Value distribution rule")
+    pii_detection: bool = Field(default=True, description="PII detection rule")
+
+
 class Rulesets(BaseModel):
     """Profiling rulesets configuration"""
-    dataset_level: bool = Field(default=True, description="Enable dataset-level rules")
-    attribute_level: bool = Field(default=True, description="Enable attribute-level rules")
+    dataset_level: DatasetLevelRules = Field(default_factory=DatasetLevelRules, description="Dataset-level rules")
+    attribute_level: AttributeLevelRules = Field(default_factory=AttributeLevelRules, description="Attribute-level rules")
 
 
 class JobCreate(BaseModel):

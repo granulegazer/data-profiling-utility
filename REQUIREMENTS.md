@@ -540,29 +540,28 @@ The application consists of **5 main screens**:
    │       │  └─→ [Back] [Next] buttons
    │       │
    │       ├─ STEP 4: Ruleset Selection
-   │       │  • **Dataset-Level Rules** (Group checkbox - selectable)
-   │       │    - ☑ Enable all 4 dataset-level rules
-   │       │    - Expandable section showing detailed rules (read-only):
-   │       │      • Dataset Statistics
-   │       │      • Dataset-Level Data Quality Metrics
-   │       │      • Referential Integrity
-   │       │      • Candidate Key Discovery
+   │       │  • **Dataset-Level Rules** (Expandable group)
+   │       │    - Expandable section with individual rule checkboxes:
+   │       │      ☑ Dataset Statistics
+   │       │      ☑ Dataset-Level Data Quality Metrics
+   │       │      ☑ Referential Integrity
+   │       │      ☑ Candidate Key Discovery
    │       │  
-   │       │  • **Attribute-Level Rules** (Group checkbox - selectable)
-   │       │    - ☑ Enable all 8 attribute-level rules
-   │       │    - Expandable section showing detailed rules (read-only):
-   │       │      • Column Statistics
-   │       │      • Data Type Analysis
-   │       │      • Numeric Analysis
-   │       │      • String Analysis
-   │       │      • Date/Time Analysis
-   │       │      • Column-Level Data Quality
-   │       │      • Value Distribution
-   │       │      • PII Detection
+   │       │  • **Attribute-Level Rules** (Expandable group)
+   │       │    - Expandable section with individual rule checkboxes:
+   │       │      ☑ Column Statistics
+   │       │      ☑ Data Type Analysis
+   │       │      ☑ Numeric Analysis
+   │       │      ☑ String Analysis
+   │       │      ☑ Date/Time Analysis
+   │       │      ☑ Column-Level Data Quality
+   │       │      ☑ Value Distribution
+   │       │      ☑ PII Detection
    │       │  
-   │       │  • Default: Both groups selected (all rules enabled)
-   │       │  • User can uncheck group to disable all rules in that category
-   │       │  • Individual rules displayed for transparency but not individually selectable
+   │       │  • Default: All 12 rules enabled (all checkboxes checked)
+   │       │  • User can select/deselect individual rules
+   │       │  • Each rule shows icon, name, and description
+   │       │  • At least one rule must be selected to proceed
    │       │  • Custom thresholds configuration (optional - Phase 2)
    │       │  └─→ [Back] [Start Profiling] buttons
    │       │
