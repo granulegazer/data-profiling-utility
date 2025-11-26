@@ -137,47 +137,74 @@ A scalable data profiling tool designed to analyze large datasets from various s
    - Data type mismatches
 
 3. **Numeric Analysis** (for numeric columns)
-   - Min, max, mean, median
-   - Standard deviation, variance
-   - Quartiles and percentiles
-   - Outlier detection
+   - Minimum value (min)
+   - Maximum value (max)
+   - Mean (average)
+   - Median (middle value)
+   - Standard deviation
+   - Variance
+   - First quartile (Q1 - 25th percentile)
+   - Third quartile (Q3 - 75th percentile)
+   - Percentiles (configurable: 5th, 10th, 90th, 95th)
+   - Outlier detection (values beyond IQR thresholds)
    - Number range validation
 
 4. **String Analysis** (for text columns)
-   - Min/max/average length
+   - Minimum length
+   - Maximum length
+   - Average length
    - Pattern frequency analysis
-   - Character set analysis
-   - Leading/trailing spaces detection
+   - Most common patterns (top N)
+   - Character set analysis (alphanumeric, special chars, unicode)
+   - Leading spaces detection
+   - Trailing spaces detection
    - Empty string detection
+   - Whitespace-only string detection
 
 5. **Date/Time Analysis** (for date/timestamp columns)
-   - Date range (min/max)
-   - Date format patterns
+   - Minimum date (earliest)
+   - Maximum date (latest)
+   - Date range span (duration)
+   - Date format patterns (detected formats)
    - Timezone detection
    - Invalid date detection
    - Future date detection
+   - Past date validation (e.g., beyond reasonable historical range)
+   - Weekend/weekday distribution
 
 6. **Column-Level Data Quality Metrics**
-   - Completeness (% of populated values in this column)
-   - Validity (% conforming to expected patterns)
-   - Consistency (pattern conformance)
+   - Completeness percentage (% of non-null values)
+   - Validity percentage (% conforming to expected patterns)
+   - Consistency score (pattern conformance)
    - Accuracy indicators
+   - Conformity rate (% matching expected format/type)
    - Column quality score (0-100)
+   - Quality grade (Gold/Silver/Bronze)
 
 7. **Value Distribution**
-   - Frequency distribution
-   - Top N most common values
-   - Value histogram generation
-   - Cardinality analysis
+   - Frequency distribution (count per value)
+   - Top N most common values (configurable N)
+   - Bottom N least common values
+   - Value histogram bins
+   - Cardinality (unique value count)
+   - Cardinality ratio (unique/total)
    - Mode (most frequent value)
+   - Mode frequency count
+   - Skewness of distribution
 
 8. **PII Detection** (per column)
-   - Identify personally identifiable information
-   - Email, phone number, SSN pattern detection
+   - Email address pattern detection
+   - Phone number pattern detection
+   - SSN (Social Security Number) pattern detection
    - Credit card number detection
-   - GDPR compliance checks
-   - Sensitive data flagging
-   - PII confidence score
+   - IP address detection
+   - Physical address detection
+   - Names detection (first/last name patterns)
+   - Date of birth detection
+   - GDPR sensitive data categories
+   - PII confidence score (0-100)
+   - PII risk level (Low/Medium/High)
+   - Sensitive data flags
 
 #### Custom Profiling Rules
 1. **Business-Specific Validations**
@@ -484,14 +511,14 @@ A scalable data profiling tool designed to analyze large datasets from various s
 4. **Candidate Key Discovery**: Single-column keys, composite keys, uniqueness %, near-unique columns, PK suggestions
 
 **Attribute-Level Rules** (8 rules per column):
-1. **Column Statistics**: Record count, null count, null percentage, unique/distinct/duplicate counts
-2. **Data Type Analysis**: Inferred types, type consistency, format patterns, mismatches
-3. **Numeric Analysis**: Min, max, mean, median, std dev, variance, quartiles, percentiles, outliers
-4. **String Analysis**: Min/max/avg length, pattern frequency, character sets, whitespace detection
-5. **Date/Time Analysis**: Date range, format patterns, timezone detection, invalid dates
-6. **Column-Level Data Quality**: Completeness, validity, consistency, accuracy, quality score
-7. **Value Distribution**: Frequency distribution, top N values, histograms, cardinality, mode
-8. **PII Detection**: Email, phone, SSN, credit card patterns, GDPR compliance, sensitive data flagging, confidence score
+1. **Column Statistics**: Record count, null count, null percentage, unique count, distinct count, duplicate count
+2. **Data Type Analysis**: Inferred type, type consistency, format patterns, type mismatches
+3. **Numeric Analysis**: Min, max, mean, median, std dev, variance, Q1, Q3, percentiles, outliers, range validation
+4. **String Analysis**: Min length, max length, avg length, pattern frequency, character sets, leading/trailing spaces, empty strings
+5. **Date/Time Analysis**: Min date, max date, range span, format patterns, timezone, invalid dates, future dates, weekend distribution
+6. **Column-Level Data Quality**: Completeness %, validity %, consistency, accuracy, conformity rate, quality score, quality grade
+7. **Value Distribution**: Frequency distribution, top N values, bottom N values, histogram bins, cardinality, cardinality ratio, mode, skewness
+8. **PII Detection**: Email, phone, SSN, credit card, IP address, physical address, names, DOB patterns, GDPR categories, confidence score, risk level
 
 #### Frontend & Visualization
 - React frontend with Vite and TypeScript
@@ -506,9 +533,13 @@ A scalable data profiling tool designed to analyze large datasets from various s
   - Filterable and sortable by name, size, quality, type
   - Search and quick comparison
 - **Detailed Entity/Attribute View**:
-  - Column-level profiling results in tables
-  - All 10 enterprise rules results displayed
-  - Expandable rows for detailed statistics
+  - **Overview Tab**: Dataset-level rules (4 rules)
+    - Entity statistics, data quality, referential integrity, candidate keys
+  - **Column Statistics Tab**: Attribute-level rules (8 rules per column)
+    - Column statistics, data type, numeric/string/date analysis
+    - Column quality, value distribution, PII detection
+  - Expandable rows for detailed atomic metrics
+  - Separate tabs for dataset-level vs attribute-level results
 - **Visualizations**:
   - Value distribution histograms
   - Data quality gauges/scorecards with grade badges (Gold/Silver/Bronze)
@@ -685,12 +716,33 @@ The application consists of **5 main screens**:
    │                       │  • Breadcrumb: Home > Job > Dataset > Entity
    │                       │
    │                       ├─ **Navigation Tabs**:
-   │                       │  • [Overview] - Summary statistics
-   │                       │  • [Column Statistics] - Detailed column metrics
-   │                       │  • [Data Quality] - Quality metrics breakdown
-   │                       │  • [Patterns & Distributions] - Value patterns
-   │                       │  • [Candidate Keys] - Key discovery results
-   │                       │  • [PII Detection] - Sensitive data findings
+   │                       │  • [Overview] - Entity summary (Dataset-Level Rules)
+   │                       │    - Entity statistics (record count, columns, size)
+   │                       │    - Overall data quality metrics
+   │                       │    - Entity-level visualizations
+   │                       │  • [Column Statistics] - Attribute-Level metrics per column
+   │                       │    - All 8 attribute-level rules results
+   │                       │    - Expandable column-by-column view
+   │                       │  • [Data Quality] - Quality breakdown
+   │                       │    - Entity-level quality score/grade
+   │                       │    - Column-level quality scores
+   │                       │    - Quality distribution charts
+   │                       │  • [Patterns & Distributions] - Value analysis
+   │                       │    - Value distributions per column
+   │                       │    - Pattern frequency charts
+   │                       │    - Histogram visualizations
+   │                       │  • [Referential Integrity] - Cross-column analysis
+   │                       │    - Foreign key validation results
+   │                       │    - Orphan records
+   │                       │    - Cross-table consistency
+   │                       │  • [Candidate Keys] - Key discovery (Dataset-Level)
+   │                       │    - Single-column candidates
+   │                       │    - Composite key suggestions
+   │                       │    - Uniqueness analysis
+   │                       │  • [PII Detection] - Sensitive data (per column)
+   │                       │    - PII patterns found
+   │                       │    - Confidence scores
+   │                       │    - Risk levels per column
    │                       │
    │                       ├─ **Content Area**:
    │                       │  • Column-level statistics table
