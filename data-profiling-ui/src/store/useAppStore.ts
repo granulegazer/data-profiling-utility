@@ -8,6 +8,11 @@ interface AppStore {
   setConnections: (connections: Connection[]) => void;
   setSelectedConnection: (connection: Connection | null) => void;
   
+  // Jobs
+  jobs: ProfilingJob[];
+  setJobs: (jobs: ProfilingJob[]) => void;
+  addJob: (job: ProfilingJob) => void;
+  
   // Current Job
   currentJob: ProfilingJob | null;
   setCurrentJob: (job: ProfilingJob | null) => void;
@@ -35,6 +40,11 @@ export const useAppStore = create<AppStore>((set) => ({
   selectedConnection: null,
   setConnections: (connections) => set({ connections }),
   setSelectedConnection: (connection) => set({ selectedConnection: connection }),
+  
+  // Jobs
+  jobs: [],
+  setJobs: (jobs) => set({ jobs }),
+  addJob: (job) => set((state) => ({ jobs: [...state.jobs, job] })),
   
   // Current Job
   currentJob: null,
