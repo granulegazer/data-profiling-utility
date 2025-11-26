@@ -206,82 +206,42 @@ A scalable data profiling tool designed to analyze large datasets from various s
    - PII risk level (Low/Medium/High)
    - Sensitive data flags
 
-#### Custom Profiling Rules
-1. **Business-Specific Validations**
-   - Domain-specific value range checks
-   - Custom regex pattern matching
-   - Business rule validation (e.g., age constraints, valid email domains)
-
-2. **Data Lineage Tracking**
-   - Source-to-target mapping validation
-   - Data transformation verification
-
-3. **Anomaly Detection**
-   - Statistical anomaly identification
-   - Trend analysis over time
-   - Sudden distribution changes
-
-4. **Custom Thresholds**
-   - User-defined acceptable ranges
-   - Configurable warning/error thresholds
-   - Business KPI validation
-
 ### 3. Output Storage
-- **Oracle Database (Metadata Storage)**:
-  - Job execution metadata (job ID, timestamps, status, parameters)
-  - Dataset metadata (source, dataset name, entity counts)
-  - Entity metadata (entity name, row counts, column counts)
-  - Connection configurations (encrypted credentials)
-  - User preferences and settings
-  - File paths/references to profiling results stored in filesystem
-- **Profiling Results Storage (Filesystem)**:
-  - JSON format stored in filesystem or network storage
-  - Hierarchical structure: `{job_id}/{dataset_name}/{entity_name}/`
-  - **File Structure**:
-    - `entity_summary.json` - Entity-level summary (dataset-level rules results)
-    - `column_statistics.json` - Attribute-level metrics (all 8 attribute rules per column)
-    - `value_distributions.json` - Value distribution data per column
-    - `pattern_analysis.json` - Pattern detection results per column
-    - `quality_metrics.json` - Quality scores (entity-level and column-level)
-    - `referential_integrity.json` - Cross-table/column relationships
-    - `candidate_keys.json` - Key discovery results
+- **Filesystem Storage** (All data stored in filesystem):
+  - JSON format stored in hierarchical folder structure
+  - Base directory: `profiling_results/`
+  - **Folder Structure**:
+    ```
+    profiling_results/
+    ├── {job_id}/
+    │   ├── job_metadata.json          # Job-level info (job_id, name, status, timestamps, source_type)
+    │   ├── dataset_summary.json       # Dataset-level aggregated metrics
+    │   └── entities/
+    │       ├── {entity_name_1}/
+    │       │   ├── entity_summary.json         # Entity-level summary (dataset-level rules)
+    │       │   ├── column_statistics.json      # All 8 attribute-level rules per column
+    │       │   ├── value_distributions.json    # Value distribution data per column
+    │       │   ├── pattern_analysis.json       # Pattern detection results
+    │       │   ├── quality_metrics.json        # Quality scores (entity + column level)
+    │       │   ├── referential_integrity.json  # Cross-column relationships
+    │       │   └── candidate_keys.json         # Key discovery results
+    │       ├── {entity_name_2}/
+    │       │   └── ... (same structure)
+    │       └── {entity_name_N}/
+    │           └── ... (same structure)
+    ```
+  - **File Contents**:
+    - `job_metadata.json`: Job ID, name, description, status, created_at, started_at, completed_at, progress, source_type, total_entities
+    - `dataset_summary.json`: Total entities, total rows, total columns, overall quality score/grade, profiled_at
+    - `entity_summary.json`: Entity name, type, row_count, column_count, source_query, selected_columns, dataset-level rule results
+    - `column_statistics.json`: Detailed attribute-level statistics for each profiled column
+    - `value_distributions.json`: Top values, frequency distributions, histograms per column
+    - `pattern_analysis.json`: Detected patterns, format consistency per column
+    - `quality_metrics.json`: Entity quality score/grade, column quality scores/grades
+    - `referential_integrity.json`: Foreign key results, orphan records, cross-table checks
+    - `candidate_keys.json`: Single-column keys, composite keys, uniqueness analysis
   - Retention policy: configurable (default 90 days)
-  - **Note**: Phase 2 will migrate results storage to Oracle database (CLOB/structured tables)
-- **Storage Schema**:
-  ```
-  Profiling_Job:
-    - job_id, created_at, started_at, completed_at, status
-    - source_type, dataset_name, entity_filter_applied
-    - total_entities, completed_entities, filtered_entities
-    - estimated_completion_time, progress_percentage
-  Dataset_Profile:
-    - dataset_profile_id, job_id, dataset_name
-    - total_entities, total_rows, total_columns, profiled_at
-    - overall_quality_score, overall_quality_grade (GOLD/SILVER/BRONZE)
-    - storage_size
-  Entity_Profile_Summary:
-    - entity_profile_id, dataset_profile_id, entity_name, entity_type
-    - source_query (NULL for tables, SQL for custom queries, NULL for API)
-    - selected_columns (NULL for all columns, comma-separated list for selection)
-    - api_endpoint (NULL for DB, API URL for data lake entities)
-    - domain_name (NULL for DB, domain value for data lake)
-    - xpath_or_attribute_path (NULL for DB, path expression for data lake)
-    - row_count, column_count, total_null_count, overall_null_percentage
-    - overall_completeness_score, data_quality_score
-    - data_quality_grade (GOLD/SILVER/BRONZE)
-    - pii_risk_score, candidate_key_count
-    - status, started_at, completed_at
-    - rows_processed, processing_speed_rows_per_sec
-  Profile_Results_File_Path:
-    - path_id, entity_profile_id
-    - base_directory_path
-    - profile_summary_file_path
-    - column_statistics_file_path
-    - value_distributions_file_path
-    - pattern_analysis_file_path
-    - quality_metrics_file_path
-    - total_file_size_bytes
-  ```
+  - Automatic cleanup of old job folders based on retention policy
 
 ### 4. Results Viewing & Reporting
 
@@ -312,24 +272,13 @@ A scalable data profiling tool designed to analyze large datasets from various s
   - List/Grid of all profiled entities
   - Entity cards/rows with key metrics
   - Search, filter, and sort capabilities
+  - Click entity to drill down
 
-**Level 2: Entity Summary List** (within Dataset Dashboard)
-- List of all entities within the profiled dataset
-- Entity-level summary cards with key metrics (row count, column count, quality score, quality grade)
-- Display entity type: table (full/partial columns) or custom query
-- Show source query for query-based profiles
-- Show selected columns for partial table profiles
-- **Quality Grade Badge**: Color-coded (Gold/Silver/Bronze) visual indicator
-- Filterable and sortable entity list (by name, size, quality score, quality grade, type)
-- Search entities within the dataset
-- Quick comparison between entities
-- Click entity to drill down
-
-**Level 3: Detailed Entity View** (drill-down from entity list)
+**Level 2: Detailed Attribute View** (drill-down from entity list)
   - Column-level profiling results in tabular format
   - Expandable rows for detailed column statistics
   - Side-by-side column comparison
-  - Drill-down into specific metrics
+  - Drill-down into specific column metrics
 - **Visualizations**:
   - Value distribution histograms
   - Data quality metric gauges
@@ -357,126 +306,6 @@ A scalable data profiling tool designed to analyze large datasets from various s
   - Search jobs by date, entity, source
   - Delete old profiling results
   - Archive/restore functionality
-
-### 5. User Interface Features
-- **Source & Dataset Configuration**:
-  - **Connection Management**:
-    - Load saved connections from configuration file (JSON/YAML)
-    - Dropdown/selection list of available connections
-    - Display connection metadata (name, type, host, last used)
-    - Add new connection (opens form/modal)
-    - Edit existing connection details
-    - Delete connection from config
-    - Test connection before use
-    - Connection config file structure:
-      ```json
-      {
-        "connections": [
-          {
-            "id": "conn_001",
-            "name": "Production PostgreSQL",
-            "type": "postgresql",
-            "host": "prod-db.example.com",
-            "port": 5432,
-            "database": "main_db",
-            "username": "profiler_user",
-            "password_encrypted": "...",
-            "last_used": "2025-11-24T10:30:00Z"
-          }
-        ]
-      }
-      ```
-  - Select dataset to profile (schema, database, directory)
-  - **Browse & Select Entities**:
-    - **Option 1: Browse Tables** - Visual table browser with checkboxes to select specific tables
-    - **Option 2: Custom Query** - Toggle to query mode to write custom SQL instead of selecting tables
-    - Toggle between table selection and query mode
-    - Multi-select tables from the dataset
-    - Preview table metadata (row count, column count) before profiling
-  - Optional entity filtering (include/exclude specific entities)
-  - Save filter patterns as templates
-- **Database Profiling Configuration**:
-  - **For Selected Tables**: 
-    - Profile all columns (default)
-    - OR select specific columns to profile (column picker UI)
-    - Display column metadata (data type, nullable)
-  - **For Custom Query Mode**: 
-    - SQL editor with syntax highlighting and validation
-    - Query validation before profiling
-    - Preview query results (first 100 rows)
-    - Estimated result set size
-    - Save frequently used queries as templates
-    - Named queries (treat query as a virtual entity with custom name)
-- **Data Lake Profiling Configuration**:
-  - Input API source endpoint URL
-  - Select domain from pre-defined domain dropdown list
-  - Specify XPath expressions (for XML) or attribute paths (for JSON)
-  - Provide entity list (manual entry, CSV import, or bulk paste)
-  - Test API connection and response structure
-  - Preview sample data extraction before profiling
-  - Save API configurations as templates
-- **Flat File Profiling Configuration**:
-  - File upload interface with drag-and-drop support
-  - Multi-file batch upload
-  - Supported formats: CSV, TSV, JSON, XML, Excel (XLSX, XLS)
-  - File parsing configuration:
-    - CSV/TSV: delimiter, header detection, encoding, quote character
-    - JSON: root path, array detection, nested structure flattening
-    - XML: root element, record tags, attribute mapping
-    - Excel: sheet selection, header row, cell range
-  - Auto-detect file structure and schema
-  - Preview data before profiling (first 100 rows)
-  - Column selection (profile all or specific columns)
-  - Data type inference configuration
-  - Sample size specification (full file or N rows)
-  - Option to treat multiple files as single dataset or separate entities
-  - Server/network path specification for large files
-- Profiling rule selection and customization
-- **Job Execution Progress**:
-  - Real-time progress indicators (percentage complete)
-  - Granular status: entities queued/in-progress/completed/failed
-  - Per-entity progress (rows processed/total rows)
-  - Overall job progress bar with percentage
-  - Estimated Time to Completion (ETC) calculation
-  - Elapsed time display
-  - Current entity being profiled
-  - Processing speed metrics (rows/second)
-  - Live log stream (optional, collapsible)
-- Interactive result exploration
-- Filter and search capabilities
-
-## Non-Functional Requirements
-
-### Performance
-- Efficient processing of datasets
-- Response time < 3 seconds for UI interactions
-- API response time < 500ms for metadata operations
-- Support concurrent profiling jobs (minimum 10 simultaneous jobs)
-
-### Scalability
-- Horizontal scaling for backend services
-- Database connection pooling
-- Caching for frequently accessed metadata
-
-### Reliability
-- Fault tolerance and error recovery
-- Job resumption after failures
-- Data validation before processing
-- Comprehensive error logging
-
-### Security
-- Encrypted credential storage
-- Role-based access control (RBAC)
-- API authentication and authorization
-- Audit logging for all operations
-- Secure data transmission (HTTPS/TLS)
-
-### Maintainability
-- Modular architecture
-- Comprehensive API documentation
-- Unit and integration tests (minimum 80% coverage)
-- Logging and monitoring integration
-- Configuration management
 
 ## Technology Stack
 
@@ -548,14 +377,14 @@ A scalable data profiling tool designed to analyze large datasets from various s
   - Entity list with summary cards (row count, column count, quality score)
   - Filterable and sortable by name, size, quality, type
   - Search and quick comparison
-- **Detailed Entity/Attribute View**:
-  - **Overview Tab**: Dataset-level rules (4 rules)
-    - Dataset statistics, data quality, referential integrity, candidate keys
-  - **Column Statistics Tab**: Attribute-level rules (8 rules per column)
-    - Column statistics, data type, numeric/string/date analysis
-    - Column quality, value distribution, PII detection
-  - Expandable rows for detailed atomic metrics
-  - Separate tabs for dataset-level vs attribute-level results
+- **Detailed Attribute View**:
+  - **Attribute-Level Tabs**: 8 attribute-level rules per column
+    - Column Statistics, Data Type Analysis, Numeric Analysis
+    - String Analysis, Date/Time Analysis, Column Quality
+    - Value Distribution, PII Detection
+  - Column-by-column view with expandable rows
+  - Each tab focuses on specific column metrics
+  - Interactive visualizations per column
 - **Visualizations**:
   - Value distribution histograms
   - Data quality gauges/scorecards with grade badges (Gold/Silver/Bronze)
@@ -851,7 +680,7 @@ Dashboard:
   • Review Quality Distribution Chart (1 Gold, 1 Silver, 1 Bronze) →
   • Scroll to Entity List →
   • Click "customers" entity card →
-Detailed Entity View: Review column statistics → [Back] →
+Detailed Attribute View: Review column-by-column statistics → [Back] →
 Dashboard: Review other entities → [Export Report]
 ```
 
@@ -865,14 +694,15 @@ Step 2: [Custom Query mode] →
         Name: "customer_orders_view" → [Next] →
 Step 3: Default options → [Start Profiling] →
 Dashboard → Click "customer_orders_view" entity →
-Detailed View: Analyze joined data quality
+Detailed Attribute View: Analyze column-level quality of joined data
 ```
 
 #### **Journey 3: Returning User - Review History**
 ```
 Home → Recent Jobs: Click "sales_db_profile (Nov 24)" →
 Dashboard (read-only) → Browse entities →
-Click "transactions" → Detailed View →
+Click "transactions" → Detailed Attribute View →
+Review per-column profiling results →
 [Compare with Previous] (Phase 2 feature)
 ```
 
@@ -902,7 +732,7 @@ Dashboard:
   • Watch progress (processing 3 files) →
   • View results for each file as separate entity →
   • Click "customers.csv" entity →
-Detailed View: Analyze file data quality
+Detailed Attribute View: Analyze column-level statistics for each CSV column
 ```
 
 ### Key Navigation Principles

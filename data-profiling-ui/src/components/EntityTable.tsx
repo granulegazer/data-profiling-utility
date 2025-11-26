@@ -1,9 +1,20 @@
 import '../App.css';
 import QualityBadge from './QualityBadge';
-import type { EntityProfile } from '../mockData';
+
+interface Entity {
+  id: number;
+  name: string;
+  type: string;
+  rows: string;
+  columns: number;
+  score: number;
+  grade: 'Gold' | 'Silver' | 'Bronze';
+  status: string;
+  metadata: string;
+}
 
 interface Props {
-  entities: EntityProfile[];
+  entities: Entity[];
 }
 
 const statusColor: Record<string, string> = {
@@ -24,16 +35,16 @@ const EntityTable = ({ entities }: Props) => {
         <div>Status</div>
       </div>
       {entities.map((entity) => (
-        <div key={entity.name} className="table__row">
+        <div key={entity.id} className="table__row">
           <div>
             <div className="table__primary">{entity.name}</div>
-            <div className="table__secondary">{entity.details}</div>
+            <div className="table__secondary">{entity.metadata}</div>
           </div>
           <div className="pill pill--ghost">{entity.type}</div>
           <div>{entity.rows}</div>
           <div>{entity.columns}</div>
           <div className="table__score">
-            <span className="table__score-value">{entity.qualityScore}%</span>
+            <span className="table__score-value">{entity.score}%</span>
             <QualityBadge grade={entity.grade} />
           </div>
           <div>

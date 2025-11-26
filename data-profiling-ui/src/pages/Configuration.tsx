@@ -145,7 +145,8 @@ function Configuration() {
           has_header: hasHeader
         },
         treat_files_as_dataset: true,
-        sample_size: sampleSize ? parseInt(sampleSize) : null
+        sample_size: sampleSize ? parseInt(sampleSize) : null,
+        selected_columns: columnSelection === 'specific' ? selectedColumns : null
       };
 
       const response = await api.post('/jobs', jobData);

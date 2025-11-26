@@ -1,6 +1,6 @@
 """API Routes - CSV Profiling"""
 
-from fastapi import APIRouter, UploadFile, File, HTTPException
+from fastapi import APIRouter, UploadFile, File, HTTPException, BackgroundTasks
 from typing import List
 import uuid
 import chardet
@@ -12,6 +12,7 @@ from app.models import (
     DatasetProfile, ColumnStats
 )
 from app.config import settings
+from app.profiler import CSVProfiler
 
 router = APIRouter()
 
@@ -60,8 +61,62 @@ async def upload_file(file: UploadFile = File(...)):
     }
 
 
+def run_profiling_job(job_id: str, job_request: JobCreate):
+    """Background task to run profiling"""
+    try:
+        # Update job status to running
+        jobs_db[job_id].status = JobStatus.RUNNING
+        jobs_db[job_id].started_at = datetime.now()
+        jobs_db[job_id].progress = 0.0
+        
+        # Create profiler
+        profiler = CSVProfiler(
+            csv_config=job_request.csv_config,
+            sample_size=job_request.sample_size,
+            selected_columns=job_request.selected_columns
+        )
+        
+        # Find actual file paths
+        file_paths = []
+        for file_id in job_request.file_paths:
+            matching_files = [f for f in os.listdir(UPLOAD_DIR) if f.startswith(file_id)]
+            if matching_files:
+                file_paths.append(UPLOAD_DIR / matching_files[0])
+        
+        # Profile all CSV files
+        datasets = profiler.profile_multiple_csvs(file_paths)
+        
+        # Calculate totals
+        total_rows = sum(d.row_count for d in datasets)
+        total_columns = sum(d.column_count for d in datasets)
+        
+        # Store results
+        result = JobResult(
+            job_id=job_id,
+            job_name=job_request.name,
+            status=JobStatus.COMPLETED,
+            datasets=datasets,
+            total_rows=total_rows,
+            total_columns=total_columns,
+            completed_at=datetime.now()
+        )
+        results_db[job_id] = result
+        
+        # Update job status
+        jobs_db[job_id].status = JobStatus.COMPLETED
+        jobs_db[job_id].completed_at = datetime.now()
+        jobs_db[job_id].progress = 100.0
+        
+    except Exception as e:
+        # Handle errors
+        jobs_db[job_id].status = JobStatus.FAILED
+        jobs_db[job_id].error_message = str(e)
+        jobs_db[job_id].completed_at = datetime.now()
+        print(f"Job {job_id} failed: {e}")
+
+
 @router.post("/jobs", response_model=Job)
-async def create_job(job_request: JobCreate):
+async def create_job(job_request: JobCreate, background_tasks: BackgroundTasks):
     """Create a new profiling job"""
     job_id = str(uuid.uuid4())
     
@@ -77,7 +132,8 @@ async def create_job(job_request: JobCreate):
     
     jobs_db[job_id] = job
     
-    # TODO: Start profiling in background
+    # Start profiling in background
+    background_tasks.add_task(run_profiling_job, job_id, job_request)
     
     return job
 

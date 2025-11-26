@@ -38,6 +38,7 @@ class JobCreate(BaseModel):
         description="If True, each file is a separate dataset"
     )
     sample_size: Optional[int] = Field(None, description="Number of rows to profile")
+    selected_columns: Optional[List[str]] = Field(None, description="Specific columns to profile (None = all columns)")
 
 
 class Job(BaseModel):

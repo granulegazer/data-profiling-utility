@@ -59,17 +59,22 @@ The Data Profiling Utility consists of 5 main screens designed for CSV file prof
    │               │
    │               └─→ [Click Entity Card/Row]
    │                   │
-   │                   └─→ 4. DETAILED ENTITY VIEW
+   │                   └─→ 4. DETAILED ATTRIBUTE VIEW
    │                       │
    │                       ├─ Header with entity info
-   │                       ├─ Navigation Tabs:
-   │                       │  • Overview
-   │                       │  • Column Statistics
-   │                       │  • Data Quality
-   │                       │  • Patterns & Distributions
-   │                       │  • Referential Integrity
-   │                       │  • Candidate Keys
-   │                       │  • PII Detection
+   │                       ├─ Breadcrumb: Home > Job > Dataset > Entity > Attributes
+   │                       ├─ Navigation Tabs (Attribute-Level Focus):
+   │                       │  • Overview (Dataset-Level Summary)
+   │                       │  • Column Statistics (Attribute-Level)
+   │                       │  • Data Type Analysis (Attribute-Level)
+   │                       │  • Numeric Analysis (Attribute-Level)
+   │                       │  • String Analysis (Attribute-Level)
+   │                       │  • Date/Time Analysis (Attribute-Level)
+   │                       │  • Column Quality (Attribute-Level)
+   │                       │  • Value Distribution (Attribute-Level)
+   │                       │  • PII Detection (Attribute-Level)
+   │                       │  • Referential Integrity (Dataset-Level)
+   │                       │  • Candidate Keys (Dataset-Level)
    │                       │
    │                       └─→ [Back to Dashboard]
    │
@@ -297,7 +302,7 @@ The Data Profiling Utility consists of 5 main screens designed for CSV file prof
 - **Dataset Summary Cards**
   - One card per CSV file/dataset
   - Shows: Dataset name, Row count, Column count, Quality grade (Gold/Silver/Bronze/Red)
-  - Click card → Navigate to Entity View
+  - Click card → Navigate to Detailed Attribute View
 
 - **Quality Distribution Chart**
   - Pie/donut chart showing quality grade distribution
@@ -306,7 +311,7 @@ The Data Profiling Utility consists of 5 main screens designed for CSV file prof
 - **Entity Table**
   - Lists all profiled datasets/entities
   - Columns: Entity Name, Row Count, Column Count, Quality Grade, Last Profiled
-  - Click row → Navigate to Entity View
+  - Click row → Navigate to Detailed Attribute View
 
 **Functionality**:
 - View job execution results
@@ -322,17 +327,18 @@ The Data Profiling Utility consists of 5 main screens designed for CSV file prof
 
 ---
 
-### 4. Entity View Screen (`/entity/{entityId}`)
+### 4. Detailed Attribute View Screen (`/entity/{entityId}`)
 
-**Purpose**: Detailed profiling results for a specific dataset/entity
+**Purpose**: Column-by-column profiling results for a specific dataset/entity
 
 **Components**:
 - **Entity Header**
   - Entity name
   - Quality badge
+  - Breadcrumb: Home > Job > Dataset > Entity > Attributes
   - Quick stats (Row Count, Column Count, Quality Score)
 
-- **7 Tabs with Detailed Information**:
+- **Navigation Tabs with Attribute-Level Focus**:
 
 #### Tab 1: **Overview** (Dataset-Level Rules Summary)
 - **Dataset Statistics**:
@@ -436,15 +442,17 @@ The Data Profiling Utility consists of 5 main screens designed for CSV file prof
   - Risk level distribution
 
 **Functionality**:
-- Deep dive into dataset quality
-- Analyze column-level statistics
-- Review quality rule violations
-- Identify PII and sensitive data
-- Export results (future)
+- Column-by-column (attribute-level) profiling view
+- Deep dive into individual column statistics
+- Analyze per-column data quality, patterns, and distributions
+- Review quality rule violations at both attribute and dataset levels
+- Identify PII and sensitive data per column
+- Export attribute-level results (future)
 
 **Navigation**:
 - Click tab → Switch view
 - "← Back to Dashboard" → `/dashboard/{jobId}`
+- "Export Attribute Report" → Download column-level results (future)
 - NavBar "Home" → `/`
 
 ---
@@ -550,9 +558,10 @@ Dashboard:
   • View Quality Distribution Chart
   • Browse Entity List
   • Click "customers.csv" entity card →
-Entity View: 
-  • Tab through Overview, Column Statistics, Data Quality, etc.
-  • Review column-level metrics
+Detailed Attribute View: 
+  • Tab through Overview, Column Statistics, Data Type Analysis, etc.
+  • Review column-by-column (attribute-level) metrics
+  • Analyze per-column statistics, quality, and distributions
   • [Back to Dashboard] → Review other entities
 ```
 
@@ -575,8 +584,9 @@ Dashboard → View results for sampled data
 ```
 Home → Recent Jobs: Click "Q4 Sales Data Analysis (Nov 26)" →
 Dashboard (read-only) → Browse entities →
-Click "orders.csv" → Entity View → Review Column Statistics tab →
-[Back to Dashboard] → [Export Report]
+Click "orders.csv" → Detailed Attribute View → Review Column Statistics tab →
+Review per-column profiling results →
+[Back to Dashboard] → [Export Attribute Report]
 ```
 
 ### **Journey 4: Explore Historical Jobs**
@@ -597,7 +607,7 @@ Step 1: Upload large_dataset.csv (500MB, 10M rows) → [Next] →
 Step 2: Enter job name: "Large Dataset Sample" → [Next] →
 Step 3: Sample Size: 10000 (profile only 10K rows to save time) → [Start Profiling] →
 Dashboard: See results for 10K row sample →
-Entity View: Analyze sampled data quality
+Detailed Attribute View: Analyze sampled data quality column-by-column
 ```
 
 ## Current Implementation Status
@@ -617,7 +627,7 @@ Entity View: Analyze sampled data quality
 ### 🔄 Partially Implemented (Uses Mock Data)
 - Dashboard visualizations (charts show static data)
 - Entity summary cards (mock quality scores)
-- Entity View tabs (mock column statistics)
+- Detailed Attribute View tabs (mock column statistics)
 - Quality grade calculations (Gold/Silver/Bronze badges are hardcoded)
 - Backend API endpoints exist but profiling logic not implemented
 - Job progress tracking UI ready but not connected to real-time updates
@@ -645,12 +655,12 @@ Entity View: Analyze sampled data quality
   - Interactive chart drill-downs
   - Data lineage visualization
 - **Backend Features**:
-  - Oracle database integration for metadata storage
-  - Migrate results from filesystem to Oracle
+  - Enhanced filesystem storage with compression
   - Job queue and background processing
   - Concurrent job execution
   - Job resumption after failures
-  - Result retention and archival
+  - Result retention and archival with automatic cleanup
+  - Filesystem indexing for faster result retrieval
 - **Security & Management**:
   - User authentication and authorization
   - Role-based access control (RBAC)
@@ -668,7 +678,7 @@ Entity View: Analyze sampled data quality
 | Configuration Step 3 | `/api/v1/jobs` | POST | Create profiling job |
 | Dashboard | `/api/v1/jobs/{jobId}` | GET | Get job details |
 | Dashboard | `/api/v1/jobs/{jobId}/results` | GET | Get job results |
-| Entity View | `/api/v1/results/entity/{entityId}` | GET | Get entity profile |
+| Detailed Attribute View | `/api/v1/results/entity/{entityId}` | GET | Get entity profile (column-by-column) |
 | History | `/api/v1/jobs` | GET | List all jobs |
 | History | `/api/v1/jobs/{jobId}` | DELETE | Delete job |
 
@@ -680,5 +690,5 @@ Entity View: Analyze sampled data quality
 2. **User configures job** → Job details captured in form state
 3. **User starts profiling** → Job creation request sent to backend → Job ID returned
 4. **Backend processes files** → Profiling engine analyzes CSV data
-5. **Results stored** → Job status updated to "Completed"
-6. **User views results** → Frontend fetches results from API → Displays in Dashboard/Entity View
+5. **Results stored in filesystem** → Hierarchical JSON files in `profiling_results/{job_id}/` → Job status updated to "Completed"
+6. **User views results** → Frontend fetches results from API (reads from filesystem) → Displays in Dashboard/Detailed Attribute View
