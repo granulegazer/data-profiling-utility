@@ -10,7 +10,7 @@ from datetime import datetime
 class ConnectionBase(BaseModel):
     """Base connection model"""
     name: str = Field(..., description="Connection name/alias")
-    type: Literal["postgresql", "oracle", "data_lake", "csv"] = Field(..., description="Connection type")
+    type: Literal["postgresql", "oracle", "data_lake", "csv", "json", "xml", "excel"] = Field(..., description="Connection type")
     host: Optional[str] = Field(None, description="Database host")
     port: Optional[int] = Field(None, description="Database port")
     database: Optional[str] = Field(None, description="Database name")

@@ -415,6 +415,22 @@ A scalable data profiling tool designed to analyze large datasets from various s
   - Test API connection and response structure
   - Preview sample data extraction before profiling
   - Save API configurations as templates
+- **Flat File Profiling Configuration**:
+  - File upload interface with drag-and-drop support
+  - Multi-file batch upload
+  - Supported formats: CSV, TSV, JSON, XML, Excel (XLSX, XLS)
+  - File parsing configuration:
+    - CSV/TSV: delimiter, header detection, encoding, quote character
+    - JSON: root path, array detection, nested structure flattening
+    - XML: root element, record tags, attribute mapping
+    - Excel: sheet selection, header row, cell range
+  - Auto-detect file structure and schema
+  - Preview data before profiling (first 100 rows)
+  - Column selection (profile all or specific columns)
+  - Data type inference configuration
+  - Sample size specification (full file or N rows)
+  - Option to treat multiple files as single dataset or separate entities
+  - Server/network path specification for large files
 - Profiling rule selection and customization
 - **Job Execution Progress**:
   - Real-time progress indicators (percentage complete)
@@ -615,40 +631,63 @@ The application consists of **5 main screens**:
    │   └─→ 2. DATASET CONFIGURATION SCREEN (Multi-step Wizard)
    │       │
    │       ├─ STEP 1: Data Source Setup
-   │       │  • Select connection type (Database/Data Lake/File)
-   │       │  • **Select Saved Connection** (dropdown from config file)
-   │       │    - Load connection parameters from configuration file
-   │       │    - Display connection name/alias
-   │       │    - Show connection type and source info
-   │       │  • OR [+ Add New Connection] button
-   │       │    - Opens modal/form to enter connection details
-   │       │    - Fields: host, port, database, credentials, etc.
-   │       │    - [Save to Config] option
-   │       │  • [Test Connection] button
-   │       │  • [Edit Connection] option for selected connection
+   │       │  • Select connection type (Database/Data Lake/Flat File)
+   │       │  • **For Database/Data Lake**:
+   │       │    - **Select Saved Connection** (dropdown from config file)
+   │       │      • Load connection parameters from configuration file
+   │       │      • Display connection name/alias
+   │       │      • Show connection type and source info
+   │       │    - OR [+ Add New Connection] button
+   │       │      • Opens modal/form to enter connection details
+   │       │      • Fields: host, port, database, credentials, etc.
+   │       │      • [Save to Config] option
+   │       │    - [Test Connection] button
+   │       │    - [Edit Connection] option for selected connection
+   │       │  • **For Flat File**:
+   │       │    - [Upload Files] or [Select from Server] button
+   │       │    - Supported formats: CSV, TSV, JSON, XML, Excel (XLSX/XLS)
+   │       │    - Drag-and-drop file upload zone
+   │       │    - Multi-file selection (batch upload)
+   │       │    - File size validation and preview
+   │       │    - Option to specify file location on server/network path
    │       │  └─→ [Next] button
    │       │
    │       ├─ STEP 2: Dataset & Entity Selection
-   │       │  • Select dataset (schema/database/directory)
-   │       │  • **BROWSE MODE TOGGLE**:
-   │       │    ┌────────────────────────────────────┐
-   │       │    │ [○ Browse Tables] [○ Custom Query] │
-   │       │    └────────────────────────────────────┘
+   │       │  • **For Database Sources**:
+   │       │    - Select dataset (schema/database)
+   │       │    - **BROWSE MODE TOGGLE**:
+   │       │      ┌────────────────────────────────────┐
+   │       │      │ [○ Browse Tables] [○ Custom Query] │
+   │       │      └────────────────────────────────────┘
+   │       │    
+   │       │    - **IF Browse Tables Mode**:
+   │       │      • Display table list with metadata (row count, columns)
+   │       │      • Multi-select checkboxes for tables
+   │       │      • Search/filter tables by name
+   │       │      • Select all/none options
+   │       │      • Preview table structure
+   │       │    
+   │       │    - **IF Custom Query Mode**:
+   │       │      • SQL editor with syntax highlighting
+   │       │      • [Validate Query] button
+   │       │      • [Preview Results] (first 100 rows)
+   │       │      • Query name input (treat as virtual entity name)
+   │       │      • Estimated result set size display
+   │       │      • [Save as Template] option
    │       │  
-   │       │  • **IF Browse Tables Mode**:
-   │       │    - Display table list with metadata (row count, columns)
-   │       │    - Multi-select checkboxes for tables
-   │       │    - Search/filter tables by name
-   │       │    - Select all/none options
-   │       │    - Preview table structure
-   │       │  
-   │       │  • **IF Custom Query Mode**:
-   │       │    - SQL editor with syntax highlighting
-   │       │    - [Validate Query] button
-   │       │    - [Preview Results] (first 100 rows)
-   │       │    - Query name input (treat as virtual entity name)
-   │       │    - Estimated result set size display
-   │       │    - [Save as Template] option
+   │       │  • **For Flat Files**:
+   │       │    - Display uploaded files list
+   │       │    - File details: name, size, type, row count (detected)
+   │       │    - [Add More Files] button
+   │       │    - [Remove File] option per file
+   │       │    - File parsing configuration per file:
+   │       │      • **CSV/TSV**: Delimiter, header row, encoding, quote char
+   │       │      • **JSON**: Root path, array detection, nested flattening
+   │       │      • **XML**: Root element, record tag, attribute mapping
+   │       │      • **Excel**: Sheet selection, header row, range specification
+   │       │    - [Preview Data] button (first 100 rows)
+   │       │    - [Auto-detect Settings] option
+   │       │    - Treat each file as separate entity or combine into dataset
    │       │  
    │       │  • Optional: Entity filtering patterns
    │       │  └─→ [Back] [Next] buttons
@@ -662,6 +701,13 @@ The application consists of **5 main screens**:
    │       │  • **For Custom Queries**:
    │       │    - Columns detected automatically from query
    │       │    - Option to exclude specific columns
+   │       │  
+   │       │  • **For Flat Files**:
+   │       │    - [○ Profile All Columns] (default)
+   │       │    - [○ Select Specific Columns]
+   │       │    - Column picker based on detected schema
+   │       │    - Data type inference settings
+   │       │    - Sample size for profiling (full file or first N rows)
    │       │  
    │       │  • Profiling rule selection (optional - Phase 2)
    │       │  • Custom thresholds configuration (optional)
@@ -839,6 +885,24 @@ Step 2: Select domain from dropdown →
         Specify JSON attribute path: "data.records[*]" → [Next] →
 Step 3: Default options → [Start Profiling] →
 Dashboard: Monitor API calls and profiling progress
+```
+
+#### **Journey 5: Flat File Upload and Profiling**
+```
+Home → [+ New Job] →
+Step 1: Select "Flat File" → 
+        Drag and drop 3 CSV files (customers.csv, orders.csv, products.csv) → 
+        Files uploaded and validated → [Next] →
+Step 2: Review file list → 
+        Configure CSV settings (auto-detected: comma delimiter, header row 1) →
+        [Preview Data] for customers.csv → Looks good →
+        [Treat as separate entities] selected → [Next] →
+Step 3: [Profile All Columns] → [Start Profiling] →
+Dashboard: 
+  • Watch progress (processing 3 files) →
+  • View results for each file as separate entity →
+  • Click "customers.csv" entity →
+Detailed View: Analyze file data quality
 ```
 
 ### Key Navigation Principles

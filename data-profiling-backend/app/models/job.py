@@ -23,11 +23,16 @@ class JobCreate(BaseModel):
     dataset_name: str = Field(..., description="Dataset name (schema/database)")
     entities: Optional[List[str]] = Field(None, description="Specific entities to profile (None = all)")
     entity_filter_pattern: Optional[str] = Field(None, description="Entity filter pattern")
-    mode: Literal["browse_tables", "custom_query"] = Field("browse_tables", description="Profiling mode")
+    mode: Literal["browse_tables", "custom_query", "flat_file"] = Field("browse_tables", description="Profiling mode")
     custom_query: Optional[str] = Field(None, description="Custom SQL query (if mode=custom_query)")
     query_name: Optional[str] = Field(None, description="Name for custom query result")
     profile_all_columns: bool = Field(True, description="Profile all columns or selected")
     selected_columns: Optional[List[str]] = Field(None, description="Selected columns (if not all)")
+    # Flat file specific fields
+    file_paths: Optional[List[str]] = Field(None, description="List of file paths to profile")
+    file_config: Optional[dict] = Field(None, description="File parsing configuration (delimiter, encoding, etc.)")
+    treat_files_as_dataset: bool = Field(False, description="True = combine files, False = separate entities")
+    sample_size: Optional[int] = Field(None, description="Number of rows to profile (None = all)")
 
 
 class ProfilingJob(BaseModel):

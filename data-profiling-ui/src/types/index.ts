@@ -1,7 +1,7 @@
 export interface Connection {
   id: string;
   name: string;
-  type: 'postgresql' | 'oracle' | 'data_lake' | 'csv';
+  type: 'postgresql' | 'oracle' | 'data_lake' | 'csv' | 'json' | 'xml' | 'excel';
   host?: string;
   port?: number;
   database?: string;
@@ -12,7 +12,7 @@ export interface Connection {
 
 export interface ConnectionCreate {
   name: string;
-  type: 'postgresql' | 'oracle' | 'data_lake' | 'csv';
+  type: 'postgresql' | 'oracle' | 'data_lake' | 'csv' | 'json' | 'xml' | 'excel';
   host?: string;
   port?: number;
   database?: string;
@@ -25,11 +25,54 @@ export interface JobCreate {
   dataset_name: string;
   entities?: string[];
   entity_filter_pattern?: string;
-  mode: 'browse_tables' | 'custom_query';
+  mode: 'browse_tables' | 'custom_query' | 'flat_file';
   custom_query?: string;
   query_name?: string;
   profile_all_columns: boolean;
   selected_columns?: string[];
+  // Flat file specific fields
+  file_paths?: string[];
+  file_config?: Record<string, any>;
+  treat_files_as_dataset?: boolean;
+  sample_size?: number;
+}
+
+// File parsing configuration interfaces
+export interface CSVConfig {
+  delimiter: string;
+  has_header: boolean;
+  encoding: string;
+  quote_char: string;
+  skip_rows?: number;
+}
+
+export interface JSONConfig {
+  root_path?: string;
+  flatten_nested: boolean;
+  array_path?: string;
+}
+
+export interface XMLConfig {
+  root_element: string;
+  record_tag: string;
+  attribute_mapping?: Record<string, string>;
+}
+
+export interface ExcelConfig {
+  sheet_name?: string;
+  sheet_index?: number;
+  header_row: number;
+  range?: string;
+}
+
+export interface FileMetadata {
+  file_name: string;
+  file_path: string;
+  file_size: number;
+  file_type: 'csv' | 'json' | 'xml' | 'excel';
+  detected_rows?: number;
+  detected_columns?: number;
+  config: CSVConfig | JSONConfig | XMLConfig | ExcelConfig;
 }
 
 export type JobStatus = 'pending' | 'running' | 'completed' | 'failed' | 'cancelled';

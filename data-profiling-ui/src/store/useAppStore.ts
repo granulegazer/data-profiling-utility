@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { Connection, ProfilingJob, DatasetProfile, EntityProfile } from '../types';
+import type { Connection, ProfilingJob, DatasetProfile, EntityProfile } from '../types';
 
 interface AppStore {
   // Connections

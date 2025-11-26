@@ -1,4 +1,4 @@
-import { QualityGrade } from '../types';
+import type { QualityGrade } from '../types';
 
 export const getGradeColor = (grade: QualityGrade): string => {
   switch (grade) {
