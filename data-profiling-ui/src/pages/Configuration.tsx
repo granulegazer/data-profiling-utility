@@ -50,7 +50,7 @@ function Configuration() {
     }
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     // Step 1 validation: Job name and at least 1 file
     if (step === 1) {
       if (!jobName.trim()) {
@@ -60,6 +60,15 @@ function Configuration() {
       if (uploadedFiles.length === 0) {
         alert('Please upload at least one CSV file');
         return;
+      }
+    }
+    
+    // Step 2 -> Step 3: Auto-load preview data if not already loaded
+    if (step === 2 && !previewData && uploadedFiles.length > 0) {
+      try {
+        await handlePreview(uploadedFiles[0]);
+      } catch (error) {
+        console.error('Auto-preview failed:', error);
       }
     }
     
