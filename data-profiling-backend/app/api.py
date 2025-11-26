@@ -19,6 +19,10 @@ router = APIRouter()
 jobs_db = {}
 results_db = {}
 
+# Upload directory
+UPLOAD_DIR = Path("uploads")
+UPLOAD_DIR.mkdir(exist_ok=True)
+
 
 @router.post("/upload", response_model=dict)
 async def upload_file(file: UploadFile = File(...)):
@@ -116,3 +120,60 @@ async def delete_job(job_id: str):
         del results_db[job_id]
     
     return {"message": "Job deleted successfully"}
+
+
+@router.get("/preview/{file_id}")
+async def preview_file(
+    file_id: str,
+    delimiter: str = ",",
+    has_header: bool = True,
+    limit: int = 5
+):
+    """Preview CSV file contents"""
+    import csv
+    
+    # Find the file in uploads directory
+    matching_files = [f for f in os.listdir(UPLOAD_DIR) if f.startswith(file_id)]
+    
+    if not matching_files:
+        raise HTTPException(status_code=404, detail="File not found")
+    
+    file_path = os.path.join(UPLOAD_DIR, matching_files[0])
+    
+    try:
+        # Detect encoding
+        with open(file_path, 'rb') as f:
+            raw_data = f.read()
+            result = chardet.detect(raw_data)
+            encoding = result['encoding'] if result['encoding'] else 'utf-8'
+        
+        # Read CSV with detected encoding
+        headers = []
+        rows = []
+        
+        with open(file_path, 'r', encoding=encoding) as f:
+            reader = csv.reader(f, delimiter=delimiter)
+            
+            if has_header:
+                headers = next(reader, [])
+            else:
+                # Generate column names
+                first_row = next(reader, [])
+                if first_row:
+                    headers = [f"Column_{i+1}" for i in range(len(first_row))]
+                    rows.append(first_row)
+            
+            # Read up to limit rows
+            for i, row in enumerate(reader):
+                if i >= limit - (0 if has_header else 1):
+                    break
+                rows.append(row)
+        
+        return {
+            "headers": headers,
+            "rows": rows,
+            "total_rows_shown": len(rows)
+        }
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error reading file: {str(e)}")
