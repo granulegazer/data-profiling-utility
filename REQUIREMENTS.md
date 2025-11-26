@@ -95,25 +95,25 @@ A scalable data profiling tool designed to analyze large datasets from various s
 
 #### Profiling Rules by Level
 
-##### **Dataset-Level Rules** (Applied to entire dataset/entity)
-1. **Entity Statistics**
+##### **Dataset-Level Rules** (Applied to entire dataset)
+1. **Dataset Statistics**
    - Total record count
    - Total column count
    - Dataset size (bytes/MB/GB)
    - Profiling timestamp and duration
 
-2. **Entity-Level Data Quality Metrics**
+2. **Dataset-Level Data Quality Metrics***
    - Overall completeness score (% of non-null values across all columns)
    - Overall data quality score (0-100)
    - Data quality grade (Gold/Silver/Bronze)
-   - Entity-level PII risk score
+   - PII risk score
 
 3. **Referential Integrity** (Cross-column analysis)
    - Foreign key validation
    - Orphan record detection
    - Cross-table consistency checks
 
-4. **Candidate Key Discovery** (Entity-wide analysis)
+4. **Candidate Key Discovery** (Cross-column analysis)
    - Identify single-column candidate keys (columns with all unique values)
    - Suggest composite key combinations (multi-column uniqueness)
    - Calculate uniqueness percentage for potential keys
@@ -505,8 +505,8 @@ A scalable data profiling tool designed to analyze large datasets from various s
 #### Complete Generic Enterprise Profiling Rules
 
 **Dataset-Level Rules** (4 rules):
-1. **Entity Statistics**: Record count, column count, dataset size, profiling metadata
-2. **Entity-Level Data Quality**: Overall completeness, quality score/grade (Gold/Silver/Bronze), PII risk
+1. **Dataset Statistics**: Record count, column count, dataset size, profiling metadata
+2. **Dataset-Level Data Quality**: Overall completeness, quality score/grade (Gold/Silver/Bronze), PII risk
 3. **Referential Integrity**: Foreign key validation, orphan records, cross-table checks
 4. **Candidate Key Discovery**: Single-column keys, composite keys, uniqueness %, near-unique columns, PK suggestions
 
@@ -534,7 +534,7 @@ A scalable data profiling tool designed to analyze large datasets from various s
   - Search and quick comparison
 - **Detailed Entity/Attribute View**:
   - **Overview Tab**: Dataset-level rules (4 rules)
-    - Entity statistics, data quality, referential integrity, candidate keys
+    - Dataset statistics, data quality, referential integrity, candidate keys
   - **Column Statistics Tab**: Attribute-level rules (8 rules per column)
     - Column statistics, data type, numeric/string/date analysis
     - Column quality, value distribution, PII detection
@@ -716,10 +716,10 @@ The application consists of **5 main screens**:
    │                       │  • Breadcrumb: Home > Job > Dataset > Entity
    │                       │
    │                       ├─ **Navigation Tabs**:
-   │                       │  • [Overview] - Entity summary (Dataset-Level Rules)
-   │                       │    - Entity statistics (record count, columns, size)
+   │                       │  • [Overview] - Dataset summary (Dataset-Level Rules)
+   │                       │    - Dataset statistics (record count, columns, size)
    │                       │    - Overall data quality metrics
-   │                       │    - Entity-level visualizations
+   │                       │    - Dataset-level visualizations
    │                       │  • [Column Statistics] - Attribute-Level metrics per column
    │                       │    - All 8 attribute-level rules results
    │                       │    - Expandable column-by-column view
