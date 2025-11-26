@@ -9,8 +9,8 @@ from datetime import datetime
 
 # ===== Dataset-Level Rules Models =====
 
-class EntityStatistics(BaseModel):
-    """Entity Statistics (Dataset-Level Rule 1)"""
+class DatasetStatistics(BaseModel):
+    """Dataset Statistics (Dataset-Level Rule 1)"""
     total_record_count: int
     total_column_count: int
     dataset_size_bytes: int
@@ -18,8 +18,8 @@ class EntityStatistics(BaseModel):
     profiling_duration_seconds: float
 
 
-class EntityDataQuality(BaseModel):
-    """Entity-Level Data Quality Metrics (Dataset-Level Rule 2)"""
+class DatasetDataQuality(BaseModel):
+    """Dataset-Level Data Quality Metrics (Dataset-Level Rule 2)"""
     overall_completeness_score: float = Field(..., ge=0, le=100)
     overall_quality_score: float = Field(..., ge=0, le=100)
     quality_grade: Literal["GOLD", "SILVER", "BRONZE"]
@@ -196,8 +196,8 @@ class ProfilingResult(BaseModel):
     profiled_at: datetime
     
     # Dataset-Level Rules (4 rules)
-    entity_statistics: EntityStatistics
-    entity_data_quality: EntityDataQuality
+    dataset_statistics: DatasetStatistics
+    dataset_data_quality: DatasetDataQuality
     referential_integrity: ReferentialIntegrity
     candidate_keys: List[CandidateKey]
     

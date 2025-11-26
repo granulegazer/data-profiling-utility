@@ -136,14 +136,14 @@ export interface ProfilingResult {
   entity_name: string;
   entity_type: string;
   profiled_at: string;
-  entity_statistics: {
+  dataset_statistics: {
     total_record_count: number;
     total_column_count: number;
     dataset_size_bytes: number;
     profiling_timestamp: string;
     profiling_duration_seconds: number;
   };
-  entity_data_quality: {
+  dataset_data_quality: {
     overall_completeness_score: number;
     overall_quality_score: number;
     quality_grade: QualityGrade;
