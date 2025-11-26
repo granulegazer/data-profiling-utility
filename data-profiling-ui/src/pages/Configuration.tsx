@@ -1,15 +1,23 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import SectionCard from '../components/SectionCard';
+import { api } from '../api/client';
 
 type SourceType = 'database' | 'data_lake' | 'flat_file';
 type Mode = 'browse_tables' | 'custom_query' | 'flat_file';
 
 function Configuration() {
   const navigate = useNavigate();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [step, setStep] = useState(1);
-  const [sourceType, setSourceType] = useState<SourceType>('database');
+  const [sourceType, setSourceType] = useState<SourceType>('flat_file');
   const [mode, setMode] = useState<Mode>('browse_tables');
+  const [uploadedFiles, setUploadedFiles] = useState<Array<{name: string, size: number, path: string}>>([]);
+  const [isUploading, setIsUploading] = useState(false);
+  const [jobName, setJobName] = useState('');
+  const [delimiter, setDelimiter] = useState(',');
+  const [hasHeader, setHasHeader] = useState(true);
+  const [sampleSize, setSampleSize] = useState<string>('');
 
   const handleNext = () => {
     if (step < 3) {
@@ -25,9 +33,74 @@ function Configuration() {
     }
   };
 
-  const handleStartProfiling = () => {
-    // TODO: API call to start profiling
-    navigate('/dashboard/mock-job-id');
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+
+    setIsUploading(true);
+    const uploadedFileData: Array<{name: string, size: number, path: string}> = [];
+
+    try {
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const response = await api.post('/upload', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+
+        uploadedFileData.push({
+          name: file.name,
+          size: file.size,
+          path: response.data.file_id
+        });
+      }
+
+      setUploadedFiles([...uploadedFiles, ...uploadedFileData]);
+      alert(`Successfully uploaded ${uploadedFileData.length} file(s)`);
+    } catch (error: any) {
+      console.error('Upload error:', error);
+      alert('Failed to upload files: ' + (error.response?.data?.detail || error.message));
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const handleStartProfiling = async () => {
+    if (uploadedFiles.length === 0) {
+      alert('Please upload at least one CSV file');
+      return;
+    }
+
+    if (!jobName.trim()) {
+      alert('Please enter a job name');
+      return;
+    }
+
+    try {
+      const jobData = {
+        name: jobName,
+        description: `Profiling ${uploadedFiles.length} CSV file(s)`,
+        file_paths: uploadedFiles.map(f => f.path),
+        csv_config: {
+          delimiter,
+          encoding: 'utf-8',
+          has_header: hasHeader
+        },
+        treat_files_as_dataset: true,
+        sample_size: sampleSize ? parseInt(sampleSize) : null
+      };
+
+      const response = await api.post('/jobs', jobData);
+      navigate(`/dashboard/${response.data.job_id}`);
+    } catch (error: any) {
+      console.error('Job creation error:', error);
+      alert('Failed to create job: ' + (error.response?.data?.detail || error.message));
+    }
   };
 
   return (
@@ -71,14 +144,39 @@ function Configuration() {
 
             {sourceType === 'flat_file' && (
               <>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".csv"
+                  multiple
+                  style={{ display: 'none' }}
+                  onChange={handleFileUpload}
+                />
                 <div style={{ border: '2px dashed #ccc', padding: '2rem', textAlign: 'center', borderRadius: '8px' }}>
-                  <p>Drag and drop files here</p>
+                  <p>Upload CSV files</p>
                   <p className="muted">or</p>
-                  <button className="btn btn--primary">Upload Files</button>
+                  <button 
+                    className="btn btn--primary" 
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isUploading}
+                  >
+                    {isUploading ? 'Uploading...' : 'Upload CSV Files'}
+                  </button>
                   <p className="muted" style={{ marginTop: '1rem' }}>
-                    Supported: CSV, TSV, JSON, XML, Excel (XLSX/XLS)
+                    Currently supporting: CSV files only
                   </p>
                 </div>
+                
+                {uploadedFiles.length > 0 && (
+                  <div style={{ marginTop: '1rem' }}>
+                    <strong>Uploaded Files:</strong>
+                    {uploadedFiles.map((file, idx) => (
+                      <div key={idx} style={{ padding: '0.5rem', border: '1px solid #ddd', borderRadius: '4px', marginTop: '0.5rem' }}>
+                        {file.name} ({(file.size / 1024).toFixed(2)} KB)
+                      </div>
+                    ))}
+                  </div>
+                )}
               </>
             )}
           </div>
@@ -161,21 +259,40 @@ function Configuration() {
 
           {sourceType === 'flat_file' && (
             <div>
-              <p>Uploaded Files:</p>
-              <div style={{ marginTop: '1rem' }}>
-                <div style={{ padding: '1rem', border: '1px solid #ddd', borderRadius: '4px' }}>
-                  <strong>customers.csv</strong> - 2.5 MB (detected: 125,000 rows, 15 columns)
-                  <div style={{ marginTop: '0.5rem' }}>
-                    <label>
-                      Delimiter: <input type="text" defaultValue="," style={{ width: '50px' }} />
-                    </label>
-                    <label style={{ marginLeft: '1rem' }}>
-                      <input type="checkbox" defaultChecked /> Has header row
-                    </label>
-                  </div>
-                </div>
+              <div className="form-grid">
+                <label>
+                  Job Name *
+                  <input 
+                    type="text"
+                    placeholder="e.g., Customer Data Profiling"
+                    value={jobName}
+                    onChange={(e) => setJobName(e.target.value)}
+                    required
+                  />
+                </label>
               </div>
-              <button className="btn btn--ghost" style={{ marginTop: '1rem' }}>+ Add More Files</button>
+
+              {uploadedFiles.length > 0 ? (
+                <div style={{ marginTop: '1rem' }}>
+                  <p><strong>Uploaded Files ({uploadedFiles.length}):</strong></p>
+                  {uploadedFiles.map((file, idx) => (
+                    <div key={idx} style={{ padding: '1rem', border: '1px solid #ddd', borderRadius: '4px', marginTop: '0.5rem' }}>
+                      <strong>{file.name}</strong> - {(file.size / 1024).toFixed(2)} KB
+                      <div style={{ marginTop: '0.5rem' }}>
+                        <label>
+                          Delimiter: <input type="text" value={delimiter} onChange={(e) => setDelimiter(e.target.value)} style={{ width: '50px' }} />
+                        </label>
+                        <label style={{ marginLeft: '1rem' }}>
+                          <input type="checkbox" checked={hasHeader} onChange={(e) => setHasHeader(e.target.checked)} /> Has header row
+                        </label>
+                      </div>
+                    </div>
+                  ))}
+                  <button className="btn btn--ghost" style={{ marginTop: '1rem' }} onClick={() => fileInputRef.current?.click()}>+ Add More Files</button>
+                </div>
+              ) : (
+                <p className="muted" style={{ marginTop: '1rem' }}>No files uploaded yet. Go back to Step 1 to upload files.</p>
+              )}
             </div>
           )}
 
@@ -203,7 +320,12 @@ function Configuration() {
               <>
                 <label>
                   Sample Size (rows)
-                  <input type="number" placeholder="Leave empty to profile entire file" />
+                  <input 
+                    type="number" 
+                    placeholder="Leave empty to profile entire file" 
+                    value={sampleSize}
+                    onChange={(e) => setSampleSize(e.target.value)}
+                  />
                 </label>
               </>
             )}
