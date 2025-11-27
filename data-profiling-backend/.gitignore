@@ -12,6 +12,5 @@ ENV/
 .DS_Store
 uploads/
 results/
-*.csv
 *.json
 *.xml
