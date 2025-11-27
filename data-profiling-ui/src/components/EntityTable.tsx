@@ -15,6 +15,7 @@ interface Entity {
 
 interface Props {
   entities: Entity[];
+  onEntityClick?: (entityId: number) => void;
 }
 
 const statusColor: Record<string, string> = {
@@ -23,7 +24,7 @@ const statusColor: Record<string, string> = {
   Queued: 'muted',
 };
 
-const EntityTable = ({ entities }: Props) => {
+const EntityTable = ({ entities, onEntityClick }: Props) => {
   return (
     <div className="table">
       <div className="table__head">
@@ -35,7 +36,12 @@ const EntityTable = ({ entities }: Props) => {
         <div>Status</div>
       </div>
       {entities.map((entity) => (
-        <div key={entity.id} className="table__row">
+        <div 
+          key={entity.id} 
+          className="table__row"
+          onClick={() => onEntityClick?.(entity.id)}
+          style={{ cursor: onEntityClick ? 'pointer' : 'default' }}
+        >
           <div>
             <div className="table__primary">{entity.name}</div>
             <div className="table__secondary">{entity.metadata}</div>

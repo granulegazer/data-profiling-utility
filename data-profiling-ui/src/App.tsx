@@ -22,7 +22,7 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/configure" element={<Configuration />} />
             <Route path="/dashboard/:jobId" element={<Dashboard />} />
-            <Route path="/entity/:entityId" element={<EntityView />} />
+            <Route path="/entity/:jobId/:datasetIndex" element={<EntityView />} />
             <Route path="/history" element={<History />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

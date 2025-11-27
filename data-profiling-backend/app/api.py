@@ -69,9 +69,10 @@ def run_profiling_job(job_id: str, job_request: JobCreate):
         jobs_db[job_id].started_at = datetime.now()
         jobs_db[job_id].progress = 0.0
         
-        # Create profiler
+        # Create profiler with rulesets
         profiler = CSVProfiler(
             csv_config=job_request.csv_config,
+            rulesets=job_request.rulesets,
             sample_size=job_request.sample_size,
             selected_columns=job_request.selected_columns
         )

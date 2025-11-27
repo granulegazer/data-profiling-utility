@@ -5,44 +5,7 @@ import StatCard from '../components/StatCard';
 import QualityBadge from '../components/QualityBadge';
 import EntityTable from '../components/EntityTable';
 import { api } from '../api/client';
-
-interface ColumnStats {
-  column_name: string;
-  data_type: string;
-  null_count: number;
-  null_percentage: number;
-  unique_count: number;
-  unique_percentage: number;
-}
-
-interface Dataset {
-  dataset_name: string;
-  row_count: number;
-  column_count: number;
-  file_size_bytes: number;
-  columns: ColumnStats[];
-  profiled_at: string;
-}
-
-interface JobResult {
-  job_id: string;
-  job_name: string;
-  status: string;
-  datasets: Dataset[];
-  total_rows: number;
-  total_columns: number;
-  completed_at: string;
-}
-
-interface Job {
-  job_id: string;
-  name: string;
-  status: string;
-  progress: number;
-  created_at: string;
-  completed_at?: string;
-  error_message?: string;
-}
+import { Dataset, JobResult, Job } from '../types/profiling';
 
 function Dashboard() {
   const { jobId } = useParams();
@@ -97,17 +60,28 @@ function Dashboard() {
 
   // Calculate quality metrics from actual data
   const calculateQualityScore = (dataset: Dataset): number => {
-    if (dataset.columns.length === 0) return 0;
+    // Use backend dataset quality if available
+    if (dataset.dataset_quality?.overall_quality_score) {
+      return Math.round(dataset.dataset_quality.overall_quality_score);
+    }
     
-    // Calculate average completeness (inverse of null percentage)
+    // Fallback: calculate from completeness
+    if (dataset.columns.length === 0) return 0;
     const avgCompleteness = dataset.columns.reduce((sum, col) => 
       sum + (100 - col.null_percentage), 0) / dataset.columns.length;
     
     return Math.round(avgCompleteness);
   };
 
-  const getQualityGrade = (score: number): 'Gold' | 'Silver' | 'Bronze' => {
-    if (score >= 85) return 'Gold';
+  const getQualityGrade = (dataset: Dataset): 'Gold' | 'Silver' | 'Bronze' => {
+    // Use backend dataset quality grade if available
+    if (dataset.dataset_quality?.quality_grade) {
+      return dataset.dataset_quality.quality_grade;
+    }
+    
+    // Fallback based on score
+    const score = calculateQualityScore(dataset);
+    if (score >= 90) return 'Gold';
     if (score >= 70) return 'Silver';
     return 'Bronze';
   };
@@ -162,22 +136,37 @@ function Dashboard() {
 
   // Calculate metrics from actual results
   const datasetScores = results.datasets.map(d => calculateQualityScore(d));
+  const datasetGrades = results.datasets.map(d => getQualityGrade(d));
   const averageQualityScore = datasetScores.length > 0 
     ? Math.round(datasetScores.reduce((a, b) => a + b, 0) / datasetScores.length)
     : 0;
-  const overallGrade = getQualityGrade(averageQualityScore);
+  
+  // Get overall grade from first dataset or calculate
+  const overallGrade = results.datasets[0]?.dataset_quality?.quality_grade || 
+    (averageQualityScore >= 90 ? 'Gold' : averageQualityScore >= 70 ? 'Silver' : 'Bronze');
 
   // Quality distribution
   const qualityDistribution = {
-    Gold: datasetScores.filter(s => s >= 85).length,
-    Silver: datasetScores.filter(s => s >= 70 && s < 85).length,
-    Bronze: datasetScores.filter(s => s < 70).length,
+    Gold: datasetGrades.filter(g => g === 'Gold').length,
+    Silver: datasetGrades.filter(g => g === 'Silver').length,
+    Bronze: datasetGrades.filter(g => g === 'Bronze').length,
   };
+
+  // Calculate PII risk
+  const avgPIIRisk = results.datasets
+    .filter(d => d.dataset_quality?.pii_risk_score !== undefined)
+    .reduce((sum, d) => sum + (d.dataset_quality?.pii_risk_score || 0), 0) / 
+    Math.max(results.datasets.length, 1);
 
   // Transform datasets into entities format
   const entities = results.datasets.map((dataset, idx) => {
     const score = datasetScores[idx];
-    const grade = getQualityGrade(score);
+    const grade = datasetGrades[idx];
+    
+    // Count columns with PII
+    const piiColumns = dataset.columns.filter(col => 
+      col.pii_detection && col.pii_detection.pii_categories.length > 0
+    ).length;
     
     return {
       id: idx + 1,
@@ -188,7 +177,7 @@ function Dashboard() {
       score: score,
       grade: grade,
       status: 'Completed',
-      metadata: `${dataset.columns.length} columns profiled • ${(dataset.file_size_bytes / 1024).toFixed(2)} KB`
+      metadata: `${dataset.columns.length} columns profiled • ${(dataset.file_size_bytes / 1024).toFixed(2)} KB${piiColumns > 0 ? ` • ${piiColumns} columns with PII` : ''}`
     };
   });
 
@@ -220,7 +209,7 @@ function Dashboard() {
           <StatCard
             label="Average Quality Score"
             value={`${averageQualityScore}%`}
-            hint="Based on data completeness"
+            hint="Based on data quality analysis"
           />
           <StatCard
             label="Total Rows"
@@ -234,9 +223,25 @@ function Dashboard() {
           />
         </div>
 
-        <div style={{ marginTop: '1rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <span>Overall Quality Grade:</span>
-          <QualityBadge grade={overallGrade} />
+        <div style={{ marginTop: '1.5rem', display: 'flex', alignItems: 'center', gap: '2rem', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <span style={{ fontWeight: '500' }}>Overall Quality Grade:</span>
+            <QualityBadge grade={overallGrade} />
+          </div>
+          {avgPIIRisk > 0 && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <span style={{ fontWeight: '500' }}>PII Risk Score:</span>
+              <span style={{ 
+                padding: '0.25rem 0.75rem', 
+                borderRadius: '12px',
+                backgroundColor: avgPIIRisk > 50 ? '#fee' : avgPIIRisk > 20 ? '#fff3cd' : '#d4edda',
+                color: avgPIIRisk > 50 ? '#c00' : avgPIIRisk > 20 ? '#856404' : '#155724',
+                fontWeight: '600'
+              }}>
+                {avgPIIRisk.toFixed(1)}% {avgPIIRisk > 50 ? 'High' : avgPIIRisk > 20 ? 'Medium' : 'Low'}
+              </span>
+            </div>
+          )}
         </div>
       </SectionCard>
 
@@ -266,7 +271,16 @@ function Dashboard() {
           <button className="btn btn--ghost">Export Report</button>
         }
       >
-        <EntityTable entities={entities} />
+        <EntityTable 
+          entities={entities}
+          onEntityClick={(entityId) => {
+            const datasetIndex = entityId - 1;
+            const dataset = results.datasets[datasetIndex];
+            navigate(`/entity/${jobId}/${datasetIndex}`, { 
+              state: { dataset, jobName: results.job_name } 
+            });
+          }}
+        />
       </SectionCard>
     </div>
   );
