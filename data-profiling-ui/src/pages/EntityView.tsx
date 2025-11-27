@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import SectionCard from '../components/SectionCard';
 import QualityBadge from '../components/QualityBadge';
 import { api } from '../api/client';
-import { Dataset, JobResult } from '../types/profiling';
+import type { Dataset, JobResult } from '../types/profiling';
 
 type Tab = 'overview' | 'columns' | 'quality' | 'patterns' | 'integrity' | 'keys' | 'pii';
 

@@ -5,7 +5,7 @@ import StatCard from '../components/StatCard';
 import QualityBadge from '../components/QualityBadge';
 import EntityTable from '../components/EntityTable';
 import { api } from '../api/client';
-import { Dataset, JobResult, Job } from '../types/profiling';
+import type { Dataset, JobResult, Job } from '../types/profiling';
 
 function Dashboard() {
   const { jobId } = useParams();

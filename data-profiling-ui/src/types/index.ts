@@ -1,3 +1,6 @@
+// Re-export everything from profiling.ts
+export * from './profiling';
+
 export interface Connection {
   id: string;
   name: string;

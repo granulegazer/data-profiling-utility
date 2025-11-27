@@ -117,7 +117,7 @@ function Configuration() {
     if (!files || files.length === 0) return;
 
     setIsUploading(true);
-    const uploadedFileData: Array<{name: string, size: number, path: string}> = [];
+    const uploadedFileData: UploadedFile[] = [];
 
     try {
       for (let i = 0; i < files.length; i++) {
