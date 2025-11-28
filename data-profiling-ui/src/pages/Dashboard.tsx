@@ -153,10 +153,11 @@ function Dashboard() {
   };
 
   // Calculate PII risk
-  const avgPIIRisk = results.datasets
+  const avgPIIRiskScore = results.datasets
     .filter(d => d.dataset_quality?.pii_risk_score !== undefined)
     .reduce((sum, d) => sum + (d.dataset_quality?.pii_risk_score || 0), 0) / 
     Math.max(results.datasets.length, 1);
+  const avgPIIRisk = avgPIIRiskScore * 100;
 
   // Transform datasets into entities format
   const entities = results.datasets.map((dataset, idx) => {

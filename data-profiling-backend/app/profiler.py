@@ -99,11 +99,17 @@ class CSVProfiler:
         q3 = float(non_null.quantile(0.75))
         iqr = q3 - q1
         
-        # Outlier detection using IQR method
+        # Outlier detection using IQR with Z-score fallback for zero IQR
         lower_bound = q1 - 1.5 * iqr
         upper_bound = q3 + 1.5 * iqr
         outliers = non_null[(non_null < lower_bound) | (non_null > upper_bound)]
-        
+        if iqr == 0:
+            mean_val = float(non_null.mean())
+            std_val = float(non_null.std(ddof=0))
+            if std_val > 0:
+                z_scores = (non_null - mean_val) / std_val
+                outliers = non_null[z_scores.abs() > 3]
+
         return NumericStats(
             min=float(non_null.min()),
             max=float(non_null.max()),
@@ -188,6 +194,9 @@ class CSVProfiler:
             if len(valid_dates) == 0:
                 return None
             
+            non_null_total = series.notnull().sum()
+            format_consistency = (len(valid_dates) / non_null_total) if non_null_total > 0 else 0
+            
             min_date = valid_dates.min()
             max_date = valid_dates.max()
             date_range = (max_date - min_date).days
@@ -221,7 +230,8 @@ class CSVProfiler:
                 invalid_date_count=int(invalid_count),
                 future_date_count=int(future_count),
                 weekend_count=int(weekend_count),
-                weekday_count=int(weekday_count)
+                weekday_count=int(weekday_count),
+                format_consistency=float(format_consistency)
             )
         except:
             return None
@@ -232,52 +242,28 @@ class CSVProfiler:
             return None
         
         total_count = len(series)
-        null_count = series.isnull().sum()
-        non_null_count = total_count - null_count
-        
-        # Completeness
-        completeness = (non_null_count / total_count * 100) if total_count > 0 else 0
-        
-        # Validity - check type consistency
-        validity = 100.0
-        if non_null_count > 0:
-            if data_type in ['integer', 'float']:
-                try:
-                    pd.to_numeric(series.dropna())
-                except:
-                    validity = 80.0
-            elif data_type == 'date_string':
-                try:
-                    pd.to_datetime(series.dropna())
-                    validity = 100.0
-                except:
-                    validity = 70.0
-        
-        # Consistency - pattern conformance
-        consistency = 100.0
-        if pd.api.types.is_string_dtype(series) or pd.api.types.is_object_dtype(series):
-            non_null = series.dropna().astype(str)
-            if len(non_null) > 0:
-                # Check pattern consistency
-                patterns = [re.sub(r'[a-zA-Z]', 'A', re.sub(r'[0-9]', '9', str(val))) for val in non_null.head(100)]
-                most_common_pattern = Counter(patterns).most_common(1)[0][1]
-                consistency = (most_common_pattern / min(len(patterns), 100)) * 100
-        
-        # Conformity rate
-        conformity = (completeness + validity) / 2
-        
-        # Overall quality score
-        quality_score = (completeness * 0.4 + validity * 0.3 + consistency * 0.2 + conformity * 0.1)
-        
-        # Quality grade
-        if quality_score >= 90:
+        null_rate = float(series.isnull().mean()) if total_count > 0 else 0.0
+        distinctness_ratio = float(series.nunique(dropna=False) / total_count) if total_count > 0 else 0.0
+
+        # Grade assignment based on Generic_Rules.md thresholds
+        if null_rate <= 0.01 and 0.05 <= distinctness_ratio <= 0.95:
             grade = "Gold"
-        elif quality_score >= 70:
+            quality_score = 100.0
+        elif null_rate <= 0.05 and 0.02 <= distinctness_ratio <= 0.98:
             grade = "Silver"
+            quality_score = 80.0
         else:
             grade = "Bronze"
+            quality_score = 60.0
+
+        completeness = (1 - null_rate) * 100
+        validity = distinctness_ratio * 100
+        consistency = validity
+        conformity = (completeness + validity) / 2
         
         return ColumnQualityMetrics(
+            null_rate=null_rate,
+            distinctness_ratio=distinctness_ratio,
             completeness_percentage=float(completeness),
             validity_percentage=float(validity),
             consistency_score=float(consistency),
@@ -297,30 +283,31 @@ class CSVProfiler:
         if len(non_null) == 0:
             return None
         
-        cardinality = series.nunique()
+        cardinality = non_null.nunique()
         cardinality_ratio = cardinality / total_count if total_count > 0 else 0
         
         # Mode
-        value_counts = series.value_counts()
+        value_counts = non_null.value_counts()
         mode = value_counts.index[0] if len(value_counts) > 0 else None
         mode_frequency = int(value_counts.iloc[0]) if len(value_counts) > 0 else None
         
-        # Top and bottom values
+        # Top and bottom values (default N=10)
         top_values = [
             {"value": str(val), "count": int(count), "percentage": float(count / total_count * 100)}
             for val, count in value_counts.head(10).items()
         ]
         
+        bottom_counts = non_null.value_counts(ascending=True)
         bottom_values = [
             {"value": str(val), "count": int(count), "percentage": float(count / total_count * 100)}
-            for val, count in value_counts.tail(10).items()
+            for val, count in bottom_counts.head(10).items()
         ]
         
-        # Histogram bins for numeric data
+        # Histogram bins for numeric data (default 20 bins)
         histogram_bins = []
         if pd.api.types.is_numeric_dtype(series):
             try:
-                counts, bin_edges = np.histogram(non_null, bins=10)
+                counts, bin_edges = np.histogram(non_null, bins=20)
                 histogram_bins = [
                     {
                         "bin_start": float(bin_edges[i]),
@@ -359,44 +346,29 @@ class CSVProfiler:
         non_null = series.dropna().astype(str)
         if len(non_null) == 0:
             return None
-        
-        # Sample for PII detection
-        sample = non_null.head(1000)
-        sample_text = ' '.join(sample)
-        
-        pii_flags = {}
-        pii_categories = []
-        
-        # Check each PII pattern
-        for pii_type, pattern in self.pii_patterns.items():
-            matches = re.findall(pattern, sample_text)
-            if matches:
-                pii_flags[pii_type] = True
-                pii_categories.append(pii_type)
-            else:
-                pii_flags[pii_type] = False
-        
-        # Name detection (simple heuristic - capitalized words)
-        name_pattern = r'\b[A-Z][a-z]+\s+[A-Z][a-z]+\b'
-        name_matches = re.findall(name_pattern, sample_text)
-        contains_names = len(name_matches) > len(sample) * 0.1
-        if contains_names:
-            pii_categories.append('names')
-        
-        # DOB detection (date patterns)
-        dob_pattern = r'\b(0?[1-9]|1[0-2])/(0?[1-9]|[12][0-9]|3[01])/\d{4}\b'
-        dob_matches = re.findall(dob_pattern, sample_text)
-        contains_dob = len(dob_matches) > 0
-        if contains_dob:
-            pii_categories.append('dob')
-        
-        # Calculate confidence score
-        confidence_score = (len(pii_categories) / 9) * 100  # 9 possible categories
-        
-        # Determine risk level
-        if confidence_score > 50:
+
+        combined_pattern = "|".join(self.pii_patterns.values())
+        match_series = non_null.str.contains(combined_pattern, regex=True, case=False, na=False)
+        match_rate = float(match_series.mean())
+
+        # Pattern-specific flags
+        pii_flags = {
+            pii_type: bool(non_null.str.contains(pattern, regex=True, case=False, na=False).any())
+            for pii_type, pattern in self.pii_patterns.items()
+        }
+        pii_categories = [pii_type for pii_type, flag in pii_flags.items() if flag]
+
+        # Column name hints
+        name_keywords = ['email', 'mail', 'phone', 'mobile', 'contact', 'ssn', 'social', 'credit', 'card', 'ip', 'address']
+        name_hint = 0.3 if any(keyword in series.name.lower() for keyword in name_keywords) else 0.0
+        if name_hint > 0:
+            pii_categories.append('name_hint')
+
+        confidence_score = min(1.0, 0.7 * match_rate + name_hint)
+
+        if confidence_score > 0.5:
             risk_level = "High"
-        elif confidence_score > 20:
+        elif confidence_score > 0.2:
             risk_level = "Medium"
         else:
             risk_level = "Low"
@@ -407,8 +379,8 @@ class CSVProfiler:
             contains_ssn=pii_flags.get('ssn', False),
             contains_credit_card=pii_flags.get('credit_card', False),
             contains_ip_address=pii_flags.get('ip_address', False),
-            contains_names=contains_names,
-            contains_dob=contains_dob,
+            contains_names=False,
+            contains_dob=False,
             pii_categories=pii_categories,
             confidence_score=float(confidence_score),
             risk_level=risk_level
@@ -519,6 +491,12 @@ class CSVProfiler:
             if col.pii_detection is not None
         ]
         pii_risk_score = max(pii_detections) if pii_detections else 0
+        if pii_risk_score > 0.5:
+            pii_risk_level = "High"
+        elif pii_risk_score > 0.2:
+            pii_risk_level = "Medium"
+        else:
+            pii_risk_level = "Low"
         
         # Determine grade
         if overall_quality_score >= 90:
@@ -532,7 +510,8 @@ class CSVProfiler:
             overall_completeness=float(overall_completeness),
             overall_quality_score=float(overall_quality_score),
             quality_grade=grade,
-            pii_risk_score=float(pii_risk_score)
+            pii_risk_score=float(pii_risk_score),
+            pii_risk_level=pii_risk_level
         )
     
     def analyze_referential_integrity(self, df: pd.DataFrame) -> Optional[ReferentialIntegrity]:
@@ -548,7 +527,7 @@ class CSVProfiler:
         cross_table_consistency = []
         
         # Basic integrity check: look for column name patterns suggesting relationships
-        id_columns = [col for col in df.columns if 'id' in col.lower()]
+        id_columns = [col for col in df.columns if col.lower().endswith('_id')]
         
         for id_col in id_columns:
             # Check for nulls in ID columns (potential orphans)
@@ -560,16 +539,38 @@ class CSVProfiler:
                     "message": f"{id_col} has {null_ids} null values"
                 })
         
-        # Check for duplicate IDs in primary key candidates
+        # Foreign key style checks: child `_id` column should exist in parent column with same base name
+        for child_col in id_columns:
+            base_name = child_col[:-3].lower()  # remove '_id'
+            parent_candidates = [c for c in df.columns if c.lower() == base_name or c.lower() == f"{base_name}id" or c.lower() == "id"]
+            
+            for parent_col in parent_candidates:
+                child_non_null = df[child_col].dropna()
+                parent_non_null = df[parent_col].dropna()
+                
+                if len(child_non_null) == 0:
+                    continue
+                
+                missing_mask = ~child_non_null.isin(parent_non_null)
+                missing_count = int(missing_mask.sum())
+                match_rate = 1 - (missing_count / len(child_non_null))
+                
+                foreign_key_checks.append({
+                    "child_column": child_col,
+                    "parent_column": parent_col,
+                    "missing_count": missing_count,
+                    "match_rate": float(match_rate)
+                })
+        
+        # Check for duplicate IDs in ID columns (consistency check)
         for id_col in id_columns:
-            if 'id' == id_col.lower() or id_col.lower().endswith('_id'):
-                duplicates = df[id_col].duplicated().sum()
-                if duplicates > 0:
-                    cross_table_consistency.append({
-                        "column": id_col,
-                        "duplicate_count": int(duplicates),
-                        "message": f"{id_col} has {duplicates} duplicate values"
-                    })
+            duplicates = df[id_col].duplicated().sum()
+            if duplicates > 0:
+                cross_table_consistency.append({
+                    "column": id_col,
+                    "duplicate_count": int(duplicates),
+                    "message": f"{id_col} has {duplicates} duplicate values"
+                })
         
         return ReferentialIntegrity(
             foreign_key_checks=foreign_key_checks,
@@ -588,72 +589,56 @@ class CSVProfiler:
         
         total_rows = len(df)
         
-        # Single column key analysis
+        # Single column key analysis (must be fully non-null and unique)
         for col in df.columns:
-            unique_count = df[col].nunique()
             null_count = df[col].isnull().sum()
-            uniqueness = (unique_count / total_rows * 100) if total_rows > 0 else 0
-            
+            if null_count > 0 or total_rows == 0:
+                continue
+
+            unique_count = df[col].nunique(dropna=False)
             is_unique = unique_count == total_rows
-            has_nulls = null_count > 0
-            
-            # Determine recommendation
-            if is_unique and not has_nulls:
-                recommendation = "primary_key"
-            elif is_unique and has_nulls:
-                recommendation = "candidate_key"
-            elif uniqueness > 95:
-                recommendation = "near_unique"
-            else:
-                continue  # Skip columns with low uniqueness
-            
+
+            if not is_unique:
+                continue
+
             candidate = CandidateKey(
                 columns=[col],
-                is_unique=is_unique,
-                uniqueness_percentage=float(uniqueness),
+                is_unique=True,
+                uniqueness_percentage=100.0,
                 is_composite=False,
-                has_nulls=has_nulls,
-                recommendation=recommendation
+                has_nulls=False,
+                recommendation="primary_key"
             )
             
             single_column_keys.append(candidate)
-            
-            if recommendation == "primary_key":
-                primary_key_suggestions.append(candidate)
+            primary_key_suggestions.append(candidate)
         
         # Composite key analysis (2-column combinations only for performance)
-        if len(df.columns) <= 20:  # Only for smaller datasets
+        if len(df.columns) <= 20 and total_rows > 0:  # Only for smaller datasets
             for col1, col2 in combinations(df.columns, 2):
-                # Check uniqueness of combination
-                combined = df[[col1, col2]].drop_duplicates()
-                unique_count = len(combined)
-                null_count = df[[col1, col2]].isnull().any(axis=1).sum()
-                uniqueness = (unique_count / total_rows * 100) if total_rows > 0 else 0
+                pair = df[[col1, col2]]
+                if pair.isnull().any(axis=1).any():
+                    continue
+
+                unique_count = pair.drop_duplicates().shape[0]
+                is_unique = unique_count == total_rows
                 
-                if uniqueness > 95:  # Only high uniqueness combos
-                    is_unique = unique_count == total_rows
-                    has_nulls = null_count > 0
-                    
-                    if is_unique and not has_nulls:
-                        recommendation = "primary_key"
-                    elif is_unique:
-                        recommendation = "candidate_key"
-                    else:
-                        recommendation = "near_unique"
-                    
-                    candidate = CandidateKey(
-                        columns=[col1, col2],
-                        is_unique=is_unique,
-                        uniqueness_percentage=float(uniqueness),
-                        is_composite=True,
-                        has_nulls=has_nulls,
-                        recommendation=recommendation
-                    )
-                    
-                    composite_keys.append(candidate)
-                    
-                    if recommendation == "primary_key" and len(primary_key_suggestions) == 0:
-                        primary_key_suggestions.append(candidate)
+                if not is_unique:
+                    continue
+                
+                candidate = CandidateKey(
+                    columns=[col1, col2],
+                    is_unique=True,
+                    uniqueness_percentage=100.0,
+                    is_composite=True,
+                    has_nulls=False,
+                    recommendation="primary_key"
+                )
+                
+                composite_keys.append(candidate)
+                
+                if len(primary_key_suggestions) == 0:
+                    primary_key_suggestions.append(candidate)
         
         return CandidateKeys(
             single_column_keys=single_column_keys,

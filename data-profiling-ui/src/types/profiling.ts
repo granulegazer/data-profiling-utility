@@ -38,9 +38,12 @@ export interface DateTimeStats {
   future_date_count?: number;
   weekend_count?: number;
   weekday_count?: number;
+  format_consistency?: number;
 }
 
 export interface ColumnQualityMetrics {
+  null_rate: number;
+  distinctness_ratio: number;
   completeness_percentage: number;
   validity_percentage: number;
   consistency_score: number;
@@ -100,6 +103,7 @@ export interface DatasetQualityMetrics {
   overall_quality_score: number;
   quality_grade: 'Gold' | 'Silver' | 'Bronze';
   pii_risk_score: number;
+  pii_risk_level: 'Low' | 'Medium' | 'High';
 }
 
 export interface ReferentialIntegrity {

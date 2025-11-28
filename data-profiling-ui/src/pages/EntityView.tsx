@@ -66,6 +66,8 @@ function EntityView() {
 
   const qualityGrade = dataset.dataset_quality?.quality_grade || 'Bronze';
   const qualityScore = dataset.dataset_quality?.overall_quality_score || 0;
+  const piiRiskScore = dataset.dataset_quality ? dataset.dataset_quality.pii_risk_score * 100 : 0;
+  const piiRiskLevel = dataset.dataset_quality?.pii_risk_level || (piiRiskScore > 50 ? 'High' : piiRiskScore > 20 ? 'Medium' : 'Low');
 
   return (
     <div className="page">
@@ -84,12 +86,12 @@ function EntityView() {
               <span style={{ 
                 padding: '0.25rem 0.75rem', 
                 borderRadius: '12px',
-                backgroundColor: dataset.dataset_quality.pii_risk_score > 50 ? '#fee' : dataset.dataset_quality.pii_risk_score > 20 ? '#fff3cd' : '#d4edda',
-                color: dataset.dataset_quality.pii_risk_score > 50 ? '#c00' : dataset.dataset_quality.pii_risk_score > 20 ? '#856404' : '#155724',
+                backgroundColor: piiRiskScore > 50 ? '#fee' : piiRiskScore > 20 ? '#fff3cd' : '#d4edda',
+                color: piiRiskScore > 50 ? '#c00' : piiRiskScore > 20 ? '#856404' : '#155724',
                 fontWeight: '600',
                 fontSize: '0.875rem'
               }}>
-                PII Risk: {dataset.dataset_quality.pii_risk_score.toFixed(1)}%
+                PII Risk: {piiRiskScore.toFixed(1)}% ({piiRiskLevel})
               </span>
             )}
           </div>
@@ -206,7 +208,7 @@ function EntityView() {
                 <div>
                   <div className="muted">PII Risk Score</div>
                   <div style={{ fontSize: '1.5rem', fontWeight: '600' }}>
-                    {dataset.dataset_quality.pii_risk_score.toFixed(2)}%
+                    {piiRiskScore.toFixed(2)}% ({piiRiskLevel})
                   </div>
                 </div>
               </div>
@@ -298,10 +300,10 @@ function EntityView() {
                 <thead>
                   <tr style={{ borderBottom: '2px solid #e0e0e0' }}>
                     <th style={{ textAlign: 'left', padding: '0.75rem' }}>Column</th>
+                    <th style={{ textAlign: 'right', padding: '0.75rem' }}>Null Rate</th>
+                    <th style={{ textAlign: 'right', padding: '0.75rem' }}>Distinctness</th>
                     <th style={{ textAlign: 'right', padding: '0.75rem' }}>Completeness</th>
                     <th style={{ textAlign: 'right', padding: '0.75rem' }}>Validity</th>
-                    <th style={{ textAlign: 'right', padding: '0.75rem' }}>Consistency</th>
-                    <th style={{ textAlign: 'right', padding: '0.75rem' }}>Conformity</th>
                     <th style={{ textAlign: 'right', padding: '0.75rem' }}>Score</th>
                     <th style={{ textAlign: 'center', padding: '0.75rem' }}>Grade</th>
                   </tr>
@@ -311,16 +313,16 @@ function EntityView() {
                     <tr key={idx} style={{ borderBottom: '1px solid #f0f0f0' }}>
                       <td style={{ padding: '0.75rem', fontWeight: '500' }}>{col.column_name}</td>
                       <td style={{ textAlign: 'right', padding: '0.75rem' }}>
+                        {(col.quality_metrics!.null_rate * 100).toFixed(1)}%
+                      </td>
+                      <td style={{ textAlign: 'right', padding: '0.75rem' }}>
+                        {(col.quality_metrics!.distinctness_ratio * 100).toFixed(1)}%
+                      </td>
+                      <td style={{ textAlign: 'right', padding: '0.75rem' }}>
                         {col.quality_metrics!.completeness_percentage.toFixed(1)}%
                       </td>
                       <td style={{ textAlign: 'right', padding: '0.75rem' }}>
                         {col.quality_metrics!.validity_percentage.toFixed(1)}%
-                      </td>
-                      <td style={{ textAlign: 'right', padding: '0.75rem' }}>
-                        {col.quality_metrics!.consistency_score.toFixed(1)}
-                      </td>
-                      <td style={{ textAlign: 'right', padding: '0.75rem' }}>
-                        {col.quality_metrics!.conformity_rate.toFixed(1)}%
                       </td>
                       <td style={{ textAlign: 'right', padding: '0.75rem', fontWeight: '600' }}>
                         {col.quality_metrics!.quality_score.toFixed(1)}
@@ -422,6 +424,36 @@ function EntityView() {
                 )}
               </div>
               
+              <div>
+                <h3 style={{ marginBottom: '0.5rem' }}>Foreign Key Checks</h3>
+                {dataset.referential_integrity.foreign_key_checks.length > 0 ? (
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
+                    <thead>
+                      <tr style={{ borderBottom: '2px solid #e0e0e0' }}>
+                        <th style={{ textAlign: 'left', padding: '0.75rem' }}>Child Column</th>
+                        <th style={{ textAlign: 'left', padding: '0.75rem' }}>Parent Column</th>
+                        <th style={{ textAlign: 'right', padding: '0.75rem' }}>Missing</th>
+                        <th style={{ textAlign: 'right', padding: '0.75rem' }}>Match Rate</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {dataset.referential_integrity.foreign_key_checks.map((check, idx) => (
+                        <tr key={idx} style={{ borderBottom: '1px solid #f0f0f0' }}>
+                          <td style={{ padding: '0.75rem' }}>{check.child_column}</td>
+                          <td style={{ padding: '0.75rem' }}>{check.parent_column}</td>
+                          <td style={{ padding: '0.75rem', textAlign: 'right' }}>{check.missing_count}</td>
+                          <td style={{ padding: '0.75rem', textAlign: 'right' }}>
+                            {(check.match_rate * 100).toFixed(1)}%
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                ) : (
+                  <p className="muted">No foreign key style matches identified</p>
+                )}
+              </div>
+
               <div>
                 <h3 style={{ marginBottom: '0.5rem' }}>Cross-Table Consistency</h3>
                 {dataset.referential_integrity.cross_table_consistency.length > 0 ? (
@@ -591,7 +623,7 @@ function EntityView() {
                         {col.pii_detection!.contains_names ? '✓' : '×'}
                       </td>
                       <td style={{ textAlign: 'right', padding: '0.75rem', fontWeight: '600' }}>
-                        {col.pii_detection!.confidence_score.toFixed(1)}%
+                        {(col.pii_detection!.confidence_score * 100).toFixed(1)}%
                       </td>
                       <td style={{ textAlign: 'center', padding: '0.75rem' }}>
                         <span style={{ 

@@ -123,10 +123,13 @@ class DateTimeStats(BaseModel):
     future_date_count: Optional[int] = None
     weekend_count: Optional[int] = None
     weekday_count: Optional[int] = None
+    format_consistency: Optional[float] = None  # 0-1 share of parsable values
 
 
 class ColumnQualityMetrics(BaseModel):
     """Column-level data quality metrics"""
+    null_rate: float = 0.0  # fraction of nulls over total rows
+    distinctness_ratio: float = 0.0  # nunique including null / total rows
     completeness_percentage: float = 0.0
     validity_percentage: float = 0.0
     consistency_score: float = 0.0
@@ -195,7 +198,8 @@ class DatasetQualityMetrics(BaseModel):
     overall_completeness: float = 0.0
     overall_quality_score: float = 0.0
     quality_grade: str = "Bronze"  # Gold, Silver, Bronze
-    pii_risk_score: float = 0.0
+    pii_risk_score: float = 0.0  # 0-1 scale
+    pii_risk_level: str = "Low"
 
 
 class ReferentialIntegrity(BaseModel):
