@@ -277,14 +277,15 @@ class CSVProfiler:
         if not self.rulesets.attribute_level.value_distribution:
             return None
         
-        total_count = len(series)
         non_null = series.dropna()
         
         if len(non_null) == 0:
             return None
         
+        total_count = len(non_null)
+        
         cardinality = non_null.nunique()
-        cardinality_ratio = cardinality / total_count if total_count > 0 else 0
+        cardinality_ratio = cardinality / len(series) if len(series) > 0 else 0
         
         # Mode
         value_counts = non_null.value_counts()
