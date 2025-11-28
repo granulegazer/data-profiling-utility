@@ -272,8 +272,8 @@ function Configuration() {
                   style={{ display: 'none' }}
                   onChange={handleFileUpload}
                 />
-                <div style={{ border: '2px dashed rgba(255, 255, 255, 0.18)', padding: '2rem', textAlign: 'center', borderRadius: '12px', background: 'rgba(255, 255, 255, 0.02)' }}>
-                  <p style={{ color: '#c5ccdd' }}>Upload CSV files</p>
+                <div style={{ border: '2px dashed rgba(0, 92, 169, 0.25)', padding: '2rem', textAlign: 'center', borderRadius: '12px', background: '#f5fbff' }}>
+                  <p style={{ color: '#0f2a4a' }}>Upload CSV files</p>
                   <p className="muted">or</p>
                   <button 
                     className="btn btn--primary" 
@@ -289,23 +289,23 @@ function Configuration() {
                 
                 {uploadedFiles.length > 0 && (
                   <div style={{ marginTop: '1rem' }}>
-                    <strong style={{ color: '#c5ccdd' }}>Uploaded Files:</strong>
+                    <strong style={{ color: '#0f2a4a' }}>Uploaded Files:</strong>
                     {uploadedFiles.map((file, idx) => (
                       <div 
                         key={idx} 
                         style={{ 
                           padding: '0.75rem', 
-                          border: '1px solid rgba(255, 255, 255, 0.08)', 
+                          border: '1px solid rgba(0, 92, 169, 0.12)', 
                           borderRadius: '10px', 
                           marginTop: '0.5rem',
-                          background: 'rgba(255, 255, 255, 0.02)',
+                          background: '#fbfeff',
                           display: 'flex',
                           justifyContent: 'space-between',
                           alignItems: 'center'
                         }}
                       >
-                        <span style={{ color: '#e8ecf6' }}>{file.name}</span>
-                        <span style={{ color: '#8f9bb3', fontSize: '0.875rem' }}>({(file.size / 1024).toFixed(2)} KB)</span>
+                        <span style={{ color: '#0f2a4a' }}>{file.name}</span>
+                        <span style={{ color: '#365271', fontSize: '0.875rem' }}>({(file.size / 1024).toFixed(2)} KB)</span>
                       </div>
                     ))}
                   </div>
@@ -394,7 +394,7 @@ function Configuration() {
             <div>
               {uploadedFiles.length > 0 ? (
                 <div style={{ marginTop: '1rem' }}>
-                  <p style={{ color: '#c5ccdd', marginBottom: '1rem' }}>
+                  <p style={{ color: '#0f2a4a', marginBottom: '1rem' }}>
                     <strong>Configure File Parsing ({uploadedFiles.length} file{uploadedFiles.length > 1 ? 's' : ''}):</strong>
                   </p>
                   {uploadedFiles.map((file, idx) => (
@@ -402,19 +402,19 @@ function Configuration() {
                       key={idx} 
                       style={{ 
                         padding: '1rem', 
-                        border: '1px solid rgba(255, 255, 255, 0.08)', 
+                        border: '1px solid rgba(0, 92, 169, 0.12)', 
                         borderRadius: '12px', 
                         marginTop: '0.75rem', 
-                        background: 'rgba(255, 255, 255, 0.02)'
+                        background: '#fbfeff'
                       }}
                     >
                       <div style={{ marginBottom: '0.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ fontWeight: 600, color: '#e8ecf6' }}>{file.name}</span>
-                        <span style={{ color: '#8f9bb3', fontSize: '0.875rem' }}>{(file.size / 1024).toFixed(2)} KB</span>
+                        <span style={{ fontWeight: 600, color: '#0f2a4a' }}>{file.name}</span>
+                        <span style={{ color: '#365271', fontSize: '0.875rem' }}>{(file.size / 1024).toFixed(2)} KB</span>
                       </div>
                       
-                      <div style={{ marginBottom: '1rem', padding: '0.5rem', background: 'rgba(75, 123, 255, 0.08)', borderRadius: '8px', border: '1px solid rgba(75, 123, 255, 0.2)' }}>
-                        <span style={{ fontSize: '0.875rem', color: '#a3cbff' }}>
+                      <div style={{ marginBottom: '1rem', padding: '0.5rem', background: 'rgba(0, 92, 169, 0.08)', borderRadius: '8px', border: '1px solid rgba(0, 92, 169, 0.2)' }}>
+                        <span style={{ fontSize: '0.875rem', color: '#0f2a4a' }}>
                           <strong>Detected Encoding:</strong> {file.encoding || 'UTF-8'}
                         </span>
                       </div>
@@ -446,7 +446,7 @@ function Configuration() {
                             onChange={(e) => setHasHeader(e.target.checked)}
                             style={{ width: 'auto', cursor: 'pointer' }}
                           />
-                          <span style={{ color: '#c5ccdd' }}>First row contains column names</span>
+                          <span style={{ color: '#0f2a4a' }}>First row contains column names</span>
                         </label>
                       </div>
                       
@@ -476,7 +476,7 @@ function Configuration() {
                 left: 0,
                 right: 0,
                 bottom: 0,
-                background: 'rgba(0, 0, 0, 0.75)',
+                background: 'rgba(0, 92, 169, 0.15)',
                 backdropFilter: 'blur(8px)',
                 display: 'flex',
                 alignItems: 'center',
@@ -489,10 +489,10 @@ function Configuration() {
             >
               <div 
                 style={{
-                  background: 'linear-gradient(135deg, rgba(15, 17, 24, 0.98), rgba(20, 23, 32, 0.98))',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  background: 'linear-gradient(135deg, rgba(245, 251, 255, 0.98), rgba(232, 243, 251, 0.96))',
+                  border: '1px solid rgba(0, 92, 169, 0.16)',
                   borderRadius: '20px',
-                  boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5), 0 0 1px rgba(75, 123, 255, 0.3)',
+                  boxShadow: '0 20px 50px rgba(0, 92, 169, 0.18)',
                   padding: '0',
                   maxWidth: '1100px',
                   width: '95%',
@@ -506,17 +506,17 @@ function Configuration() {
                 {/* Header */}
                 <div style={{ 
                   padding: '1.5rem 2rem',
-                  background: 'linear-gradient(135deg, rgba(75, 123, 255, 0.08), rgba(19, 198, 231, 0.06))',
-                  borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+                  background: 'linear-gradient(135deg, rgba(0, 92, 169, 0.12), rgba(0, 169, 80, 0.1))',
+                  borderBottom: '1px solid rgba(0, 92, 169, 0.12)',
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center'
                 }}>
                   <div>
-                    <h3 style={{ margin: 0, color: '#e8ecf6', fontSize: '1.125rem', fontWeight: 600, letterSpacing: '-0.01em' }}>
+                    <h3 style={{ margin: 0, color: '#0f2a4a', fontSize: '1.125rem', fontWeight: 700, letterSpacing: '-0.01em' }}>
                       📄 Data Preview
                     </h3>
-                    <p style={{ margin: '0.375rem 0 0 0', fontSize: '0.875rem', color: '#8f9bb3' }}>
+                    <p style={{ margin: '0.375rem 0 0 0', fontSize: '0.875rem', color: '#365271' }}>
                       {previewData.fileName}
                     </p>
                   </div>
@@ -536,23 +536,23 @@ function Configuration() {
                 {/* Stats Bar */}
                 <div style={{ 
                   padding: '0.75rem 2rem',
-                  background: 'rgba(255, 255, 255, 0.02)',
-                  borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+                  background: 'rgba(0, 92, 169, 0.06)',
+                  borderBottom: '1px solid rgba(0, 92, 169, 0.08)',
                   display: 'flex',
                   gap: '2rem',
                   fontSize: '0.8125rem'
                 }}>
                   <div>
-                    <span style={{ color: '#8f9bb3' }}>Rows:</span>
-                    <span style={{ color: '#a3cbff', fontWeight: 600, marginLeft: '0.5rem' }}>{previewData.rows.length}</span>
+                    <span style={{ color: '#365271' }}>Rows:</span>
+                    <span style={{ color: '#005ca9', fontWeight: 700, marginLeft: '0.5rem' }}>{previewData.rows.length}</span>
                   </div>
                   <div>
-                    <span style={{ color: '#8f9bb3' }}>Columns:</span>
-                    <span style={{ color: '#a3cbff', fontWeight: 600, marginLeft: '0.5rem' }}>{previewData.headers.length}</span>
+                    <span style={{ color: '#365271' }}>Columns:</span>
+                    <span style={{ color: '#005ca9', fontWeight: 700, marginLeft: '0.5rem' }}>{previewData.headers.length}</span>
                   </div>
                   <div>
-                    <span style={{ color: '#8f9bb3' }}>Sample:</span>
-                    <span style={{ color: '#ffd480', fontWeight: 600, marginLeft: '0.5rem' }}>First 5 rows</span>
+                    <span style={{ color: '#365271' }}>Sample:</span>
+                    <span style={{ color: '#00a950', fontWeight: 700, marginLeft: '0.5rem' }}>First 5 rows</span>
                   </div>
                 </div>
                 
@@ -577,9 +577,9 @@ function Configuration() {
                             style={{ 
                               padding: '1rem 1.5rem', 
                               textAlign: 'left',
-                              background: 'rgba(15, 17, 24, 0.95)',
-                              borderBottom: '2px solid rgba(75, 123, 255, 0.4)',
-                              color: '#a3cbff',
+                              background: '#f5fbff',
+                              borderBottom: '2px solid rgba(0, 92, 169, 0.25)',
+                              color: '#0f2a4a',
                               fontWeight: 600,
                               fontSize: '0.8125rem',
                               textTransform: 'uppercase',
@@ -599,7 +599,7 @@ function Configuration() {
                         <tr 
                           key={rowIdx}
                           style={{ 
-                            background: rowIdx % 2 === 0 ? 'rgba(255, 255, 255, 0.02)' : 'rgba(255, 255, 255, 0.01)'
+                            background: rowIdx % 2 === 0 ? 'rgba(0, 92, 169, 0.03)' : 'rgba(0, 169, 80, 0.02)'
                           }}
                         >
                           {row.map((cell, cellIdx) => (
@@ -607,13 +607,13 @@ function Configuration() {
                               key={cellIdx}
                               style={{ 
                                 padding: '0.875rem 1.5rem', 
-                                borderBottom: '1px solid rgba(255, 255, 255, 0.04)',
-                                color: '#c5ccdd',
+                                borderBottom: '1px solid rgba(0, 92, 169, 0.1)',
+                                color: '#0f2a4a',
                                 fontSize: '0.875rem',
                                 fontFamily: 'ui-monospace, "Cascadia Code", "Source Code Pro", Menlo, Consolas, monospace'
                               }}
                             >
-                              {cell || <span style={{ color: '#666', fontStyle: 'italic' }}>null</span>}
+                              {cell || <span style={{ color: '#6b7c90', fontStyle: 'italic' }}>null</span>}
                             </td>
                           ))}
                         </tr>
@@ -638,7 +638,7 @@ function Configuration() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
             {/* Column Selection */}
             <div>
-              <p style={{ color: '#c5ccdd', marginBottom: '1rem', fontWeight: 600 }}>Column Selection</p>
+              <p style={{ color: '#0f2a4a', marginBottom: '1rem', fontWeight: 600 }}>Column Selection</p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                 <label 
                   style={{ 
@@ -647,9 +647,9 @@ function Configuration() {
                     gap: '0.75rem',
                     cursor: 'pointer',
                     padding: '0.75rem',
-                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                    border: '1px solid rgba(0, 92, 169, 0.12)',
                     borderRadius: '10px',
-                    background: columnSelection === 'all' ? 'rgba(75, 123, 255, 0.08)' : 'rgba(255, 255, 255, 0.02)',
+                    background: columnSelection === 'all' ? 'rgba(0, 92, 169, 0.1)' : '#fbfeff',
                     transition: 'all 0.2s'
                   }}
                 >
@@ -660,7 +660,7 @@ function Configuration() {
                     onChange={() => setColumnSelection('all')}
                     style={{ width: 'auto', cursor: 'pointer' }}
                   />
-                  <span style={{ color: '#e8ecf6', fontWeight: 500 }}>Profile All Columns</span>
+                  <span style={{ color: '#0f2a4a', fontWeight: 500 }}>Profile All Columns</span>
                 </label>
                 
                 <label 
@@ -670,9 +670,9 @@ function Configuration() {
                     gap: '0.75rem',
                     cursor: 'pointer',
                     padding: '0.75rem',
-                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                    border: '1px solid rgba(0, 92, 169, 0.12)',
                     borderRadius: '10px',
-                    background: columnSelection === 'specific' ? 'rgba(75, 123, 255, 0.08)' : 'rgba(255, 255, 255, 0.02)',
+                    background: columnSelection === 'specific' ? 'rgba(0, 92, 169, 0.1)' : '#fbfeff',
                     transition: 'all 0.2s'
                   }}
                 >
@@ -683,7 +683,7 @@ function Configuration() {
                     onChange={() => setColumnSelection('specific')}
                     style={{ width: 'auto', cursor: 'pointer' }}
                   />
-                  <span style={{ color: '#e8ecf6', fontWeight: 500 }}>Select Specific Columns</span>
+                  <span style={{ color: '#0f2a4a', fontWeight: 500 }}>Select Specific Columns</span>
                 </label>
               </div>
               
@@ -693,14 +693,14 @@ function Configuration() {
                   style={{ 
                     marginTop: '1rem', 
                     padding: '1rem', 
-                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                    border: '1px solid rgba(0, 92, 169, 0.12)',
                     borderRadius: '10px',
-                    background: 'rgba(255, 255, 255, 0.02)',
+                    background: '#fbfeff',
                     maxHeight: '300px',
                     overflowY: 'auto'
                   }}
                 >
-                  <p className="muted" style={{ marginBottom: '0.75rem' }}>
+                  <p className="muted" style={{ marginBottom: '0.75rem', color: '#365271' }}>
                     Select columns to profile (requires file preview data):
                   </p>
                   {previewData && previewData.headers.length > 0 ? (
@@ -730,7 +730,7 @@ function Configuration() {
                             }}
                             style={{ width: 'auto', cursor: 'pointer' }}
                           />
-                          <span style={{ color: '#c5ccdd', fontSize: '0.875rem' }}>{header}</span>
+                          <span style={{ color: '#0f2a4a', fontSize: '0.875rem' }}>{header}</span>
                         </label>
                       ))}
                     </div>
@@ -793,17 +793,17 @@ function Configuration() {
             {/* Dataset-Level Rules */}
             <div 
               style={{ 
-                border: '1px solid rgba(255, 255, 255, 0.08)',
+                border: '1px solid rgba(0, 92, 169, 0.12)',
                 borderRadius: '12px',
-                background: 'rgba(255, 255, 255, 0.02)',
+                background: '#fbfeff',
                 overflow: 'hidden'
               }}
             >
               <div 
                 style={{ 
                   padding: '1rem 1.25rem',
-                  background: 'rgba(75, 123, 255, 0.08)',
-                  borderBottom: showDatasetRules ? '1px solid rgba(255, 255, 255, 0.08)' : 'none',
+                  background: 'rgba(0, 92, 169, 0.08)',
+                  borderBottom: showDatasetRules ? '1px solid rgba(0, 92, 169, 0.12)' : 'none',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '0.75rem',
@@ -814,11 +814,11 @@ function Configuration() {
                 <div style={{ flex: 1 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <span style={{ fontSize: '1.25rem' }}>📊</span>
-                    <span style={{ color: '#e8ecf6', fontWeight: 600 }}>Dataset-Level Rules</span>
+                    <span style={{ color: '#0f2a4a', fontWeight: 600 }}>Dataset-Level Rules</span>
                     <span style={{ 
                       fontSize: '0.75rem', 
-                      color: '#8f9bb3', 
-                      background: 'rgba(255, 255, 255, 0.08)', 
+                      color: '#0f2a4a', 
+                      background: 'rgba(0, 92, 169, 0.08)', 
                       padding: '0.125rem 0.5rem', 
                       borderRadius: '4px' 
                     }}>
@@ -835,7 +835,7 @@ function Configuration() {
               </div>
               
               {showDatasetRules && (
-                <div style={{ padding: '1rem 1.25rem', background: 'rgba(255, 255, 255, 0.01)' }}>
+                <div style={{ padding: '1rem 1.25rem', background: '#fbfeff' }}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                     {[
                       { icon: '📈', name: 'Dataset Statistics', desc: 'Record count, column count, dataset size, timestamps', state: datasetStatistics, setState: setDatasetStatistics },
@@ -847,9 +847,9 @@ function Configuration() {
                         key={idx}
                         style={{ 
                           padding: '0.75rem',
-                          background: rule.state ? 'rgba(75, 123, 255, 0.08)' : 'rgba(255, 255, 255, 0.02)',
+                          background: rule.state ? 'rgba(0, 92, 169, 0.1)' : '#f5fbff',
                           borderRadius: '8px',
-                          border: '1px solid rgba(255, 255, 255, 0.08)',
+                          border: '1px solid rgba(0, 92, 169, 0.12)',
                           cursor: 'pointer',
                           display: 'flex',
                           alignItems: 'flex-start',
@@ -866,7 +866,7 @@ function Configuration() {
                         <div style={{ flex: 1 }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
                             <span>{rule.icon}</span>
-                            <span style={{ color: '#e8ecf6', fontSize: '0.875rem', fontWeight: 500 }}>{rule.name}</span>
+                            <span style={{ color: '#0f2a4a', fontSize: '0.875rem', fontWeight: 500 }}>{rule.name}</span>
                           </div>
                           <p className="muted" style={{ fontSize: '0.8125rem', margin: 0, paddingLeft: '1.75rem' }}>
                             {rule.desc}
@@ -882,17 +882,17 @@ function Configuration() {
             {/* Attribute-Level Rules */}
             <div 
               style={{ 
-                border: '1px solid rgba(255, 255, 255, 0.08)',
+                border: '1px solid rgba(0, 92, 169, 0.12)',
                 borderRadius: '12px',
-                background: 'rgba(255, 255, 255, 0.02)',
+                background: '#fbfeff',
                 overflow: 'hidden'
               }}
             >
               <div 
                 style={{ 
                   padding: '1rem 1.25rem',
-                  background: 'rgba(75, 123, 255, 0.08)',
-                  borderBottom: showAttributeRules ? '1px solid rgba(255, 255, 255, 0.08)' : 'none',
+                  background: 'rgba(0, 92, 169, 0.08)',
+                  borderBottom: showAttributeRules ? '1px solid rgba(0, 92, 169, 0.12)' : 'none',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '0.75rem',
@@ -903,11 +903,11 @@ function Configuration() {
                 <div style={{ flex: 1 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <span style={{ fontSize: '1.25rem' }}>🔍</span>
-                    <span style={{ color: '#e8ecf6', fontWeight: 600 }}>Attribute-Level Rules</span>
+                    <span style={{ color: '#0f2a4a', fontWeight: 600 }}>Attribute-Level Rules</span>
                     <span style={{ 
                       fontSize: '0.75rem', 
-                      color: '#8f9bb3', 
-                      background: 'rgba(255, 255, 255, 0.08)', 
+                      color: '#0f2a4a', 
+                      background: 'rgba(0, 92, 169, 0.08)', 
                       padding: '0.125rem 0.5rem', 
                       borderRadius: '4px' 
                     }}>
@@ -924,7 +924,7 @@ function Configuration() {
               </div>
               
               {showAttributeRules && (
-                <div style={{ padding: '1rem 1.25rem', background: 'rgba(255, 255, 255, 0.01)' }}>
+                <div style={{ padding: '1rem 1.25rem', background: '#fbfeff' }}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                     {[
                       { icon: '📊', name: 'Column Statistics', desc: 'Record count, null count, unique values, duplicates', state: columnStatistics, setState: setColumnStatistics },
@@ -940,9 +940,9 @@ function Configuration() {
                         key={idx}
                         style={{ 
                           padding: '0.75rem',
-                          background: rule.state ? 'rgba(75, 123, 255, 0.08)' : 'rgba(255, 255, 255, 0.02)',
+                          background: rule.state ? 'rgba(0, 92, 169, 0.1)' : '#f5fbff',
                           borderRadius: '8px',
-                          border: '1px solid rgba(255, 255, 255, 0.08)',
+                          border: '1px solid rgba(0, 92, 169, 0.12)',
                           cursor: 'pointer',
                           display: 'flex',
                           alignItems: 'flex-start',
@@ -959,7 +959,7 @@ function Configuration() {
                         <div style={{ flex: 1 }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
                             <span>{rule.icon}</span>
-                            <span style={{ color: '#e8ecf6', fontSize: '0.875rem', fontWeight: 500 }}>{rule.name}</span>
+                            <span style={{ color: '#0f2a4a', fontSize: '0.875rem', fontWeight: 500 }}>{rule.name}</span>
                           </div>
                           <p className="muted" style={{ fontSize: '0.8125rem', margin: 0, paddingLeft: '1.75rem' }}>
                             {rule.desc}
@@ -998,8 +998,8 @@ function Configuration() {
             <div 
               style={{ 
                 padding: '0.875rem 1rem',
-                background: 'rgba(75, 123, 255, 0.08)',
-                border: '1px solid rgba(75, 123, 255, 0.2)',
+                background: 'rgba(0, 92, 169, 0.08)',
+                border: '1px solid rgba(0, 92, 169, 0.2)',
                 borderRadius: '8px',
                 display: 'flex',
                 alignItems: 'flex-start',
@@ -1008,7 +1008,7 @@ function Configuration() {
             >
               <span style={{ fontSize: '1.125rem' }}>ℹ️</span>
               <div style={{ flex: 1 }}>
-                <p style={{ color: '#a3cbff', fontSize: '0.875rem', margin: 0 }}>
+                <p style={{ color: '#0f2a4a', fontSize: '0.875rem', margin: 0 }}>
                   <strong>Tip:</strong> All rules are enabled by default. You can disable specific rules you don't need to speed up processing.
                 </p>
               </div>
